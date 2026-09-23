@@ -1,0 +1,8 @@
+(version 1)
+(rule "6mil_prog_connector"
+  (condition "A.insideArea('ProgConnector') || B.insideArea('ProgConnector')")
+  (constraint clearance (min 5mil)))
+
+(rule "stm32_pads"
+  (condition "A.insideArea('stm32_pads')")
+  (constraint clearance (min 5mil)))

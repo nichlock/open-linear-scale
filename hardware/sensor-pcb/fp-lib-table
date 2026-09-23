@@ -1,0 +1,4 @@
+(fp_lib_table
+  (version 7)
+  (lib (name "JR200")(type "KiCad")(uri "${KIPRJMOD}/libraries/JR200")(options "")(descr ""))
+)
