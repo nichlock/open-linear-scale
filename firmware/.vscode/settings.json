@@ -1,0 +1,12 @@
+{
+    "files.watcherExclude": {
+        "**/accuracy/**": true,
+        "**/.pio/**": true
+    },
+    "search.exclude": {
+        "**/accuracy": true
+    },
+    "python.analysis.exclude": [
+        "**/accuracy/**"
+    ]
+}
