@@ -1,0 +1,166 @@
+import argparse
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+import serial
+
+READER_SCRIPT = Path(__file__).parent / "ImpuleReader.py"
+
+ABS_Z_MIN = 145
+ABS_Z_MAX = 160
+
+SENSOR_PORT = "COM4"
+PRINTER_PORT = "COM6"
+PRINTER_BAUD = 115200
+
+Z_FEEDRATE = 300  # mm/min
+SETTLE_SECONDS = 0.3
+HOMING_TIMEOUT_S = 60.0
+MOVE_TIMEOUT_S = 60.0
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sensor-port", default=SENSOR_PORT)
+    parser.add_argument("--printer-port", default=PRINTER_PORT)
+    parser.add_argument("--printer-baud", type=int, default=PRINTER_BAUD)
+    return parser.parse_args()
+
+
+def prompt_test_parameters():
+    output_dir = Path(input("Output directory: ").strip())
+    output_dir.mkdir(parents=True, exist_ok=True)
+    bottom = float(input(f"Bottom position (mm, {ABS_Z_MIN}-{ABS_Z_MAX}): ").strip())
+    top = float(input(f"Top position (mm, {ABS_Z_MIN}-{ABS_Z_MAX}): ").strip())
+    stepsize = float(input("Step size (mm) [0.01]: ").strip() or "0.01")
+    cycles = int(input("Number of cycles: ").strip())
+    rehome = input("Rehome? (y/n): ").strip()
+
+    if not (ABS_Z_MIN <= bottom <= ABS_Z_MAX):
+        raise ValueError(f"bottom {bottom} outside allowed range [{ABS_Z_MIN}, {ABS_Z_MAX}]")
+    if not (ABS_Z_MIN <= top <= ABS_Z_MAX):
+        raise ValueError(f"top {top} outside allowed range [{ABS_Z_MIN}, {ABS_Z_MAX}]")
+    if bottom >= top:
+        raise ValueError(f"bottom {bottom} must be less than top {top}")
+    if stepsize <= 0:
+        raise ValueError(f"stepsize {stepsize} must be positive")
+    if cycles < 1:
+        raise ValueError(f"cycles {cycles} must be at least 1")
+
+    return output_dir, bottom, top, stepsize, cycles, rehome.lower() == 'y'
+
+
+def generate_cycle_positions(bottom, top, stepsize):
+    steps = round((top - bottom) / stepsize)
+    up = [bottom + i * stepsize for i in range(steps)]
+    up.append(top)
+    up = [round(position, 6) for position in up]
+    down = list(reversed(up[:-1]))
+    return up + down
+
+
+def connect_printer(port, baud):
+    ser = serial.Serial(port, baud, timeout=MOVE_TIMEOUT_S)
+    time.sleep(2.0)
+    ser.reset_input_buffer()
+    return ser
+
+
+def send_gcode(ser, line):
+    ser.write((line + "\n").encode("ascii"))
+
+
+def wait_for_ok(ser, timeout):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        raw = ser.readline()
+        if not raw:
+            continue
+        line = raw.decode("ascii", errors="replace").strip()
+        if not line:
+            continue
+        if line.lower().startswith("ok"):
+            return
+        print(f"printer: {line}")
+    raise TimeoutError(f"no ok response within {timeout}s")
+
+
+def gcode_command(ser, line, timeout=MOVE_TIMEOUT_S):
+    send_gcode(ser, line)
+    wait_for_ok(ser, timeout)
+
+
+def home_printer(ser):
+    print("Homing printer...")
+    gcode_command(ser, "G28", timeout=HOMING_TIMEOUT_S)
+    gcode_command(ser, "G90")
+    gcode_command(ser, "G1 X0 Y0 F3000")
+    gcode_command(ser, "M400", timeout=HOMING_TIMEOUT_S)
+
+
+def move_z(ser, z):
+    gcode_command(ser, f"G1 Z{z:.4f} F{Z_FEEDRATE}")
+    gcode_command(ser, "M400")
+    time.sleep(SETTLE_SECONDS)
+
+
+def capture(sensor_port, output_dir, sample_index, position):
+    output_file = output_dir / f"{sample_index:05d}_{position:.4f}.json"
+    # The first capture after a move often still catches the tail end of the
+    # motion due to sample/output delay, so take it twice and let the second
+    # capture overwrite the first before keeping the result.
+    for _ in range(2):
+        result = subprocess.run([sys.executable, str(READER_SCRIPT), sensor_port, str(output_file)])
+        if result.returncode != 0:
+            raise RuntimeError(
+                f"sensor capture failed at position {position:.4f} (exit code {result.returncode})")
+
+
+def main():
+    args = parse_args()
+    output_dir, bottom, top, stepsize, cycles, rehome = prompt_test_parameters()
+
+    positions = generate_cycle_positions(bottom, top, stepsize)
+    total_samples = len(positions) * cycles
+    print(f"Bottom={bottom} Top={top} Step={stepsize} Cycles={cycles}")
+    print(f"{len(positions)} samples per cycle, {total_samples} samples total "
+          f"(at least ~{total_samples * 2:.0f}s / {total_samples * 2 / 60:.1f}min)")
+
+    input("This will home the printer and move its axes. Make sure the sensor "
+          "cannot be bumped. Press Enter to continue...")
+
+    ser = connect_printer(args.printer_port, args.printer_baud)
+    last_position = None
+    try:
+        if rehome:
+            home_printer(ser)
+        input("Printer ready to move. Ensure nothing is interfering with motion.")
+        move_z(ser, bottom)
+        last_position = bottom
+
+        input("Printer homed and positioned at the start (bottom). Verify "
+              "alignment, then press Enter to begin sampling...")
+
+        sample_index = 0
+        for cycle in range(1, cycles + 1):
+            for position in positions:
+                move_z(ser, position)
+                last_position = position
+                capture(args.sensor_port, output_dir, sample_index, position)
+                sample_index += 1
+                print(f"cycle {cycle}/{cycles} sample {sample_index}/{total_samples} "
+                      f"z={position:.4f}")
+    finally:
+        ser.close()
+        if last_position is not None:
+            print(f"Printer left at Z={last_position:.4f}")
+
+
+if __name__ == "__main__":
+    try:
+        main()
+    except RuntimeError as error:
+        print(f"error: {error}", file=sys.stderr)
+        sys.exit(1)
