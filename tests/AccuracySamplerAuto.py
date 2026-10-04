@@ -32,33 +32,37 @@ def parse_args():
 def prompt_test_parameters():
     output_dir = Path(input("Output directory: ").strip())
     output_dir.mkdir(parents=True, exist_ok=True)
-    bottom = float(input(f"Bottom position (mm, {ABS_Z_MIN}-{ABS_Z_MAX}): ").strip())
-    top = float(input(f"Top position (mm, {ABS_Z_MIN}-{ABS_Z_MAX}): ").strip())
-    stepsize = float(input("Step size (mm) [0.01]: ").strip() or "0.01")
+    start = float(input(f"Start position (mm, {ABS_Z_MIN}-{ABS_Z_MAX}): ").strip())
+    end = float(input(f"End position (mm, {ABS_Z_MIN}-{ABS_Z_MAX}): ").strip())
+    default_step = "0.01" if end >= start else "-0.01"
+    stepsize = float(input(f"Step size (mm, signed) [{default_step}]: ").strip() or default_step)
     cycles = int(input("Number of cycles: ").strip())
     rehome = input("Rehome? (y/n): ").strip()
 
-    if not (ABS_Z_MIN <= bottom <= ABS_Z_MAX):
-        raise ValueError(f"bottom {bottom} outside allowed range [{ABS_Z_MIN}, {ABS_Z_MAX}]")
-    if not (ABS_Z_MIN <= top <= ABS_Z_MAX):
-        raise ValueError(f"top {top} outside allowed range [{ABS_Z_MIN}, {ABS_Z_MAX}]")
-    if bottom >= top:
-        raise ValueError(f"bottom {bottom} must be less than top {top}")
-    if stepsize <= 0:
-        raise ValueError(f"stepsize {stepsize} must be positive")
+    if not (ABS_Z_MIN <= start <= ABS_Z_MAX):
+        raise ValueError(f"start {start} outside allowed range [{ABS_Z_MIN}, {ABS_Z_MAX}]")
+    if not (ABS_Z_MIN <= end <= ABS_Z_MAX):
+        raise ValueError(f"end {end} outside allowed range [{ABS_Z_MIN}, {ABS_Z_MAX}]")
+    if start == end:
+        raise ValueError(f"start {start} must differ from end {end}")
+    if stepsize == 0 or (stepsize > 0) != (end > start):
+        raise ValueError(f"stepsize {stepsize} must be nonzero and point from start {start} "
+                         f"toward end {end}")
     if cycles < 1:
         raise ValueError(f"cycles {cycles} must be at least 1")
 
-    return output_dir, bottom, top, stepsize, cycles, rehome.lower() == 'y'
+    return output_dir, start, end, stepsize, cycles, rehome.lower() == 'y'
 
 
-def generate_cycle_positions(bottom, top, stepsize):
-    steps = round((top - bottom) / stepsize)
-    up = [bottom + i * stepsize for i in range(steps)]
-    up.append(top)
-    up = [round(position, 6) for position in up]
-    down = list(reversed(up[:-1]))
-    return up + down
+def generate_cycle_positions(start, end, stepsize):
+    # stepsize carries the direction of travel, so (end - start) / stepsize is
+    # always positive whether the sweep runs up or down the axis.
+    steps = round((end - start) / stepsize)
+    forward = [start + i * stepsize for i in range(steps)]
+    forward.append(end)
+    forward = [round(position, 6) for position in forward]
+    back = list(reversed(forward[:-1]))
+    return forward + back
 
 
 def connect_printer(port, baud):
@@ -120,11 +124,11 @@ def capture(sensor_port, output_dir, sample_index, position):
 
 def main():
     args = parse_args()
-    output_dir, bottom, top, stepsize, cycles, rehome = prompt_test_parameters()
+    output_dir, start, end, stepsize, cycles, rehome = prompt_test_parameters()
 
-    positions = generate_cycle_positions(bottom, top, stepsize)
+    positions = generate_cycle_positions(start, end, stepsize)
     total_samples = len(positions) * cycles
-    print(f"Bottom={bottom} Top={top} Step={stepsize} Cycles={cycles}")
+    print(f"Start={start} End={end} Step={stepsize} Cycles={cycles}")
     print(f"{len(positions)} samples per cycle, {total_samples} samples total "
           f"(at least ~{total_samples * 2:.0f}s / {total_samples * 2 / 60:.1f}min)")
 
@@ -137,10 +141,10 @@ def main():
         if rehome:
             home_printer(ser)
         input("Printer ready to move. Ensure nothing is interfering with motion.")
-        move_z(ser, bottom)
-        last_position = bottom
+        move_z(ser, start)
+        last_position = start
 
-        input("Printer homed and positioned at the start (bottom). Verify "
+        input(f"Printer homed and positioned at the start (Z={start}). Verify "
               "alignment, then press Enter to begin sampling...")
 
         sample_index = 0
