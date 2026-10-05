@@ -75,9 +75,9 @@ AdcInputPin adc_input_options[ADC_INPUT_COUNT] = {
 // Register space
 
 enum SampleOutputTypes : uint8_t {
-  OUTPUT_POSITION = 0,  // not implemented
-  OUTPUT_DBG_BURST_SNGL,
-  OUTPUT_DBG_BURST_DIFF,
+  OUTPUT_POSITION = 0,    // not implemented
+  OUTPUT_DBG_BURST_RAW,   // Take no differences
+  OUTPUT_DBG_BURST_DIFF,  // Take the diff and cancel out opposite emitters
 };
 
 enum StateMachine : uint8_t {
@@ -87,6 +87,11 @@ enum StateMachine : uint8_t {
   STATE_CONTINUOUS,
   STATE_STOPPED,
   STATE_ERROR = 99,
+};
+
+enum SensorAlgorithms : uint8_t {
+  ALGO_SLIDING_WINDOW = 0,
+  ALGO_DBG_IND_EMITTERS,  // Individual emitters are driven high then low.
 };
 
 // Register Permissions
@@ -106,7 +111,8 @@ const uint8_t P_WR = 0x4;
   X(CONVERSION_FACTOR            , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
   X(SENSOR_INPUT                 , INPUT_FILTER                          , P_RD | P_WP) \
-  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_DIFF                 , P_RD | P_WP) \
+  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_RAW                 , P_RD | P_WP) \
+  X(SENSOR_ALGORITHM             , ALGO_DBG_IND_EMITTERS                   , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
   X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
   X(CONVERSION_WINDOW            , LL_ADC_SAMPLINGTIME_12CYCLES_5        , P_RD | P_WP) \
@@ -152,10 +158,10 @@ uint32_t bit_cast(float x) {
 
 // clang-format off
 typedef enum {
-  ERRFLAG_BAD_CONFIG        = 1ul << 0,   // Bad register configuration provided
+  ERRFLAG_BAD_CONFIG              = 1ul << 0,   // Bad register configuration provided
   ERRFLAG_BAD_SENSOR_INPUT        = 1ul << 1,
   ERRFLAG_BAD_SEQUENCE_TIMING     = 1ul << 2,
-  // ERRFLAG_RESERVED                = 1ul << 4,
+  ERRFLAG_UNKOWN_ALGO             = 1ul << 4,
   // ERRFLAG_RESERVED                = 1ul << 5,
   // ERRFLAG_RESERVED                = 1ul << 6,
   // ERRFLAG_RESERVED                = 1ul << 7,
@@ -413,19 +419,34 @@ void error(ErrorFlag error_type) {
  *        output the pre-configured emitter states.
  *
  */
-void generateEmitterStateDataWrites(void) {
-  for (size_t state = 0; state < casm::EMITTER_STATE_COUNT; state++) {
-    uint32_t set = 0;  // GPIO pin set operations at this state
-    uint32_t res = 0;  // GPIO pin reset operations at this state
-    for (size_t bit = 0; bit < casm::EMITTER_COUNT; bit++) {
-      if ((1ul << bit) & casm::emitter_states[state])
-        set |= 1ul << emitter_pins[bit];
-      else
-        res |= 1ul << emitter_pins[bit];
-    }  // for (bit)
+ErrorStatus generateEmitterStateDataWrites(void) {
+  if (registers[SENSOR_ALGORITHM] == ALGO_SLIDING_WINDOW) {
+    for (size_t state = 0; state < casm::EMITTER_STATE_COUNT; state++) {
+      uint32_t set = 0;
+      uint32_t res = 0;
+      for (size_t bit = 0; bit < casm::EMITTER_COUNT; bit++) {
+        if ((1ul << bit) & casm::emitter_states[state])
+          set |= 1ul << emitter_pins[bit];
+        else
+          res |= 1ul << emitter_pins[bit];
+      }  // for (bit)
 
-    emitter_state_gpio_bsrr[state] = (res << 16) | (set);
-  }  // for (state)
+      emitter_state_gpio_bsrr[state] = (res << 16) | (set);
+    }  // for (state)
+  } else if (registers[SENSOR_ALGORITHM] == ALGO_DBG_IND_EMITTERS) {
+    for (size_t state = 0; state < casm::EMITTER_STATE_COUNT; state++) {
+      uint32_t gpio = 1 << emitter_pins[(state >> 1)];
+      if (state & 1ul) {
+        emitter_state_gpio_bsrr[state] = (gpio << 16);
+      } else {
+        emitter_state_gpio_bsrr[state] = (gpio);
+      }
+    }  // for (state)
+  } else {
+    error(ERRFLAG_UNKOWN_ALGO);
+    return ErrorStatus::ERROR;
+  }
+  return ErrorStatus::SUCCESS;
 }
 
 /**
@@ -459,8 +480,8 @@ void initializeEmitterPins(void) {
   emitter_GPIOx->OTYPER &= ~new_otyper_msk;
   emitter_GPIOx->OTYPER |= new_otyper_set;
 
-  emitter_GPIOx->OSPEEDR &= ~new_ospeed_msk;
-  emitter_GPIOx->OSPEEDR |= new_ospeed_set;
+  // emitter_GPIOx->OSPEEDR &= ~new_ospeed_msk;
+  // emitter_GPIOx->OSPEEDR |= new_ospeed_set;
 }
 
 float adcConversionLengthSeconds(uint32_t setting) {
@@ -729,8 +750,6 @@ int main(void) {
   PWR->CR1 |= PWR_CR1_LPR;
 #endif
 
-  // Fill the emitter BSRR array
-  generateEmitterStateDataWrites();
   // Write emitter pin modes
   initializeEmitterPins();
 
@@ -778,6 +797,10 @@ int main(void) {
     if (registers[SENSOR_STATE] == STATE_STOPPED || registers[SENSOR_STATE] == STATE_ERROR) {
       continue;
     } else if (registers[SENSOR_STATE] == STATE_START_CONTINUOUS) {
+      if (generateEmitterStateDataWrites() != ErrorStatus::SUCCESS) {
+        error(ERRFLAG_BAD_CONFIG);
+        continue;
+      }
       if (configureSampleFrontend() != ErrorStatus::SUCCESS) {
         error(ERRFLAG_BAD_CONFIG);
         continue;
@@ -830,7 +853,7 @@ int main(void) {
     mapped_readings[3][0] = (readings[7] - readings[6])     - (readings[15] - readings[14]);
     final_oversample = readings[15];
       // clang-format on
-    } else if (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_SNGL) {
+    } else if (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_RAW) {
       // Only capture the raw values of the first set of readings, without zeroing.
       // This is intended for noise analysis. It is only useful when paired with
       // one of the output modes that reports raw transient measurements.
@@ -858,7 +881,7 @@ int main(void) {
     // incremental_position = casm::evalPosition(mapped_readings);
     // casm::updatePosition(incremental_position, prv_inc_pos, absolute_position);
 
-    if ((registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_DIFF) || (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_SNGL)) {
+    if ((registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_DIFF) || (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_RAW)) {
       for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 2; j++)
           burst_buf[burst_iterator][i + (4 * j)] = mapped_readings[i][j];
