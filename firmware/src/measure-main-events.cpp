@@ -80,6 +80,15 @@ enum SampleOutputTypes : uint8_t {
   OUTPUT_DBG_BURST_DIFF,
 };
 
+enum StateMachine : uint8_t {
+  STATE_START_CONTINUOUS = 0,
+  STATE_STOP,
+  _STATE_BARRIER,  // Values at and below this cannot be selected by an external user (needs to happen automatically)
+  STATE_CONTINUOUS,
+  STATE_STOPPED,
+  STATE_ERROR = 99,
+};
+
 // Register Permissions
 // Read
 const uint8_t P_RD = 0x1;
@@ -92,8 +101,8 @@ const uint8_t P_WR = 0x4;
 #define REGISTER_LIST(X) \
 /* These registers are expected to be used most often */ \
   X(READING_F                    , 0                                     , P_RD)    \
-  X(ERROR_VALUE                  , 0                                     , P_RD)    \
-  X(STATE                        , 0                                     , P_RD | P_WP | P_WR) \
+  X(ERROR_VALUE                  , 0                                     , P_RD | P_WP | P_WR) \
+  X(SENSOR_STATE                 , STATE_START_CONTINUOUS                , P_RD | P_WP | P_WR) \
   X(CONVERSION_FACTOR            , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
   X(SENSOR_INPUT                 , INPUT_FILTER                          , P_RD | P_WP) \
@@ -104,8 +113,8 @@ const uint8_t P_WR = 0x4;
   X(DISCARD_FIRST_SEQUENCE       , 1                                     , P_RD | P_WP) \
   X(BURST_COUNT                  , 2048                                  , P_RD | P_WP) \
   X(BURST_OFFSET_ENABLE          , 0                                     , P_RD | P_WP) \
-  /* These are informational only (todo, validate these values) */ \
-  X(TRUE_OVERSAMPLE_CYCLE_NS      , 0                                     , P_RD) \
+  /* These are informational only */ \
+  X(TRUE_OVERSAMPLE_CYCLE_NS     , 0                                     , P_RD) \
   X(TRUE_ADC_CONVERSION_NS       , 0                                     , P_RD) \
   X(TRUE_ADC_DELAY_NS            , 0                                     , P_RD) \
   X(SEQUENCE_TIMER_FREQ          , 0                                     , P_RD) \
@@ -143,10 +152,9 @@ uint32_t bit_cast(float x) {
 
 // clang-format off
 typedef enum {
-  ERRFLAG_BAD_CONFIG              = 1ul << 0,   // Bad register configuration provided
-  // ERRFLAG_RESERVED                = 1ul << 1,
-  // ERRFLAG_RESERVED                = 1ul << 2,
-  // ERRFLAG_RESERVED                = 1ul << 3,
+  ERRFLAG_BAD_CONFIG        = 1ul << 0,   // Bad register configuration provided
+  ERRFLAG_BAD_SENSOR_INPUT        = 1ul << 1,
+  ERRFLAG_BAD_SEQUENCE_TIMING     = 1ul << 2,
   // ERRFLAG_RESERVED                = 1ul << 4,
   // ERRFLAG_RESERVED                = 1ul << 5,
   // ERRFLAG_RESERVED                = 1ul << 6,
@@ -344,10 +352,26 @@ void stopBackgroundSampling(void) {
   }
 }
 
+bool isSampleRunning() {
+  return registers[SENSOR_STATE] == STATE_STOPPED;
+}
+
 bool writeRegisterChecked(uint32_t idx, uint32_t value) {
   if (idx >= REG_COUNT) return false;
-  uint32_t required_perm = (tim_s->CR1 & TIM_CR1_CEN) ? P_WR : P_WP;
-  if (!(permissions[idx] & required_perm)) return false;
+  uint32_t required_perm = isSampleRunning() ? P_WP : P_WR;
+
+  if (idx == SENSOR_STATE && value >= _STATE_BARRIER) {
+    return false;
+  }
+
+  if (idx == ERROR_VALUE && value != 0) {
+    return false;
+  }
+
+  if (!(permissions[idx] & required_perm)) {
+    return false;
+  }
+
   registers[idx] = value;
   return true;
 }
@@ -381,6 +405,7 @@ void safePullReadings(adcreading_t destination[16]) {
 void error(ErrorFlag error_type) {
   registers[ERROR_VALUE] |= error_type;
   stopBackgroundSampling();
+  registers[SENSOR_STATE] = STATE_ERROR;
 }
 
 /**
@@ -406,7 +431,7 @@ void generateEmitterStateDataWrites(void) {
 /**
  * @brief Configure the GPIOs for the emitters based on the emitter_pins pinmap.
  */
-void configureEmitterPinModes(void) {
+void initializeEmitterPins(void) {
   uint32_t new_moder_msk = 0;
   uint32_t new_moder_set = 0;
 
@@ -436,33 +461,6 @@ void configureEmitterPinModes(void) {
 
   emitter_GPIOx->OSPEEDR &= ~new_ospeed_msk;
   emitter_GPIOx->OSPEEDR |= new_ospeed_set;
-}
-
-ErrorStatus configureAdcInputGpio() {
-  for (size_t channel = 0; channel < ADC_INPUT_COUNT; channel++) {
-    LL_GPIO_DisablePinAnalogControl(adc_input_options[channel].gpio, adc_input_options[channel].gpio_num);
-  }
-
-  const AdcInputPin& adc_pin = adc_input_options[registers[SENSOR_INPUT]];
-
-  if (adc_pin.gpio == nullptr) {
-    // The selection is a debugging input from memory, not a real analog input
-    return ErrorStatus::SUCCESS;
-  }
-
-  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
-  GPIO_InitStruct.Pin = adc_pin.gpio_num;
-  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
-  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
-  ErrorStatus status = LL_GPIO_Init(adc_pin.gpio, &GPIO_InitStruct);
-
-  LL_GPIO_EnablePinAnalogControl(adc_pin.gpio, adc_pin.gpio_num);
-
-  LL_ADC_REG_SetSequencerRanks(adc_s, LL_ADC_REG_RANK_1, adc_pin.adc_channel);
-  LL_ADC_SetChannelSamplingTime(adc_s, adc_pin.adc_channel, registers[CONVERSION_WINDOW]);
-  LL_ADC_SetChannelSingleDiff(adc_s, adc_pin.adc_channel, LL_ADC_SINGLE_ENDED);
-
-  return status;
 }
 
 float adcConversionLengthSeconds(uint32_t setting) {
@@ -500,7 +498,35 @@ float adcConversionLengthSeconds(uint32_t setting) {
   return float(cycle_count) / float(adc_freq);
 }
 
-int initializeSampleFrontend() {
+ErrorStatus configureAdcInputGpio() {
+  // note, all registers used here are assumed to contain valid values.
+  for (size_t channel = 0; channel < ADC_INPUT_COUNT; channel++) {
+    LL_GPIO_DisablePinAnalogControl(adc_input_options[channel].gpio, adc_input_options[channel].gpio_num);
+  }
+
+  const AdcInputPin& adc_pin = adc_input_options[registers[SENSOR_INPUT]];
+
+  if (adc_pin.gpio == nullptr) {
+    // The selection is a debugging input from memory, not a real analog input
+    return ErrorStatus::SUCCESS;
+  }
+
+  LL_GPIO_InitTypeDef GPIO_InitStruct = {0};
+  GPIO_InitStruct.Pin = adc_pin.gpio_num;
+  GPIO_InitStruct.Mode = LL_GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = LL_GPIO_PULL_NO;
+  ErrorStatus status = LL_GPIO_Init(adc_pin.gpio, &GPIO_InitStruct);
+
+  LL_GPIO_EnablePinAnalogControl(adc_pin.gpio, adc_pin.gpio_num);
+
+  LL_ADC_REG_SetSequencerRanks(adc_s, LL_ADC_REG_RANK_1, adc_pin.adc_channel);
+  LL_ADC_SetChannelSamplingTime(adc_s, adc_pin.adc_channel, registers[CONVERSION_WINDOW]);
+  LL_ADC_SetChannelSingleDiff(adc_s, adc_pin.adc_channel, LL_ADC_SINGLE_ENDED);
+
+  return status;
+}
+
+void initializeSampleFrontend() {
   adc_s->CR &= ~ADC_CR_ADEN;
   tim_s->CCER |= TIM_CCER_CC2E;
   tim_s->CCMR1 = 0;
@@ -525,47 +551,51 @@ int initializeSampleFrontend() {
   DMA1_Channel1->CCR = DMA_CCR_TCIE | DMA_CCR_MINC | DMA_CCR_PSIZE_1 | DMA_CCR_MSIZE_1 | DMA_CCR_PL_1;
 }
 
-int configureSampleFrontend() {
+ErrorStatus configureSampleFrontend() {
   stopBackgroundSampling();
 
-  if (adc_input_options[registers[SENSOR_INPUT]].gpio == nullptr) {
-    // The input type is memory-only and the DMA won't read ADC DR.
-    // The ADC will raise an overrun error if we don't read the DR manually.
-    adc_s->IER |= ADC_IER_EOC;
-  } else {
-    adc_s->IER &= ~ADC_IER_EOC;
+  // Before commiting anything to hardware, any dependant registers are validated
+
+  if (registers[SENSOR_INPUT] >= ADC_INPUT_COUNT) {
+    error(ERRFLAG_BAD_SENSOR_INPUT);
+    return ErrorStatus::ERROR;
   }
 
   // Configure sequence timer clock
   registers[SEQUENCE_TIMER_FREQ] = HAL_RCC_GetPCLK1Freq() * 2;
+
   float tim_clk = registers[SEQUENCE_TIMER_FREQ];
-  tim_s->ARR = ((registers[SEQUENCE_TIME_US] * tim_clk) / 1e6) / casm::EMITTER_STATE_COUNT;
+  uint32_t target_tim_arr = ((registers[SEQUENCE_TIME_US] * tim_clk) / 1e6) / casm::EMITTER_STATE_COUNT;
 
-  // Set the ADC trigger CC channel
-  uint32_t target_adc_cc_trigger = ((registers[TX_RX_DELAY_US] * tim_clk) / 1e6);
-  // A minimum of 1 count is required (TODO: is this true anymore?)
-  target_adc_cc_trigger = (target_adc_cc_trigger) ? (target_adc_cc_trigger) : 1;
-
-  tim_s->CCR2 = target_adc_cc_trigger;
-
-  if (registers[SENSOR_INPUT] == INPUT_COUNTER) {
-    DMA1_Channel1->CCR |= DMA_CCR_MEM2MEM;
-    DMA1_Channel1->CPAR = (uint32_t)(&tx_step);
-  } else {
-    DMA1_Channel1->CCR &= ~DMA_CCR_MEM2MEM;
-    DMA1_Channel1->CPAR = (uint32_t)(&adc_s->DR);
+  // An arbitrary maximum of 1s is imposed here.
+  // 100us is a guess at where things will start to break down. TODO: validate it.
+  if (target_tim_arr <= 100 || target_tim_arr > 1e6) {
+    error(ERRFLAG_BAD_SEQUENCE_TIMING);
+    return ErrorStatus::ERROR;
   }
 
-  DMA1_Channel1->CMAR = (uint32_t)readings_unsafe;
-  DMA1_Channel1->CNDTR = casm::EMITTER_STATE_COUNT;
+  // Set the ADC trigger CC channel
+  uint32_t target_tim_cc = ((registers[TX_RX_DELAY_US] * tim_clk) / 1e6);
+
+  if (target_tim_cc >= target_tim_arr) {
+    // This might work, but it is not intended behaviour, and could lead to race conditions
+    error(ERRFLAG_BAD_SEQUENCE_TIMING);
+    return ErrorStatus::ERROR;
+  }
 
   float adc_window_s = adcConversionLengthSeconds(registers[CONVERSION_WINDOW]);
+
+  // Use adcConversionLengthSeconds as a proxy to tell us whether this was a valid option
+  if (adc_window_s == 0) {
+    error(ERRFLAG_BAD_SEQUENCE_TIMING);
+    return ErrorStatus::ERROR;
+  }
 
   float conversion_period = float(registers[SEQUENCE_TIME_US]) / (float(casm::EMITTER_STATE_COUNT) * 1e6);
 
   registers[TRUE_OVERSAMPLE_CYCLE_NS] = int32_t(conversion_period * 1e9);
   registers[TRUE_ADC_CONVERSION_NS] = int32_t(adc_window_s * 1e9);
-  registers[TRUE_ADC_DELAY_NS] = int32_t(1e9 * (float(target_adc_cc_trigger) / float(tim_clk)));
+  registers[TRUE_ADC_DELAY_NS] = int32_t(1e9 * (float(target_tim_cc) / float(tim_clk)));
 
   // 0.9 is added here as timing margin
   uint32_t num_oversamples = 0.9 * conversion_period / adc_window_s;
@@ -584,10 +614,36 @@ int configureSampleFrontend() {
   registers[TRUE_ADC_OVERSAMPLE_TIME_NS] = uint32_t(total_adc_sample_time * 1e9);
 
   if (bits <= 0) {
-    Uart::cprintf("Warning, cannot oversample ADC.\n", bits);
-    Uart::cprintf("bits: %d\n", bits);
-    Error_Handler();
+    error(ERRFLAG_BAD_SEQUENCE_TIMING);
+    return ErrorStatus::ERROR;
   }
+
+  // registers ok, continue to write to hardware.
+
+  if (adc_input_options[registers[SENSOR_INPUT]].gpio == nullptr) {
+    // The input type is memory-only and the DMA won't read ADC DR.
+    // The ADC will raise an overrun error if we don't read the DR manually.
+    adc_s->IER |= ADC_IER_EOC;
+  } else {
+    adc_s->IER &= ~ADC_IER_EOC;
+  }
+
+  // A minimum of 1 count is required (TODO: is this true anymore?)
+  target_tim_cc = (target_tim_cc) ? (target_tim_cc) : 1;
+
+  tim_s->ARR = target_tim_arr;
+  tim_s->CCR2 = target_tim_cc;
+
+  if (registers[SENSOR_INPUT] == INPUT_COUNTER) {
+    DMA1_Channel1->CCR |= DMA_CCR_MEM2MEM;
+    DMA1_Channel1->CPAR = (uint32_t)(&tx_step);
+  } else {
+    DMA1_Channel1->CCR &= ~DMA_CCR_MEM2MEM;
+    DMA1_Channel1->CPAR = (uint32_t)(&adc_s->DR);
+  }
+
+  DMA1_Channel1->CMAR = (uint32_t)readings_unsafe;
+  DMA1_Channel1->CNDTR = casm::EMITTER_STATE_COUNT;
 
   uint32_t ovsr = (bits - 1) & 0x7ul;
   uint32_t ovss = (bits >= 4) ? (bits - 4) : 0;
@@ -605,8 +661,10 @@ int configureSampleFrontend() {
   configureAdcInputGpio();
 
   // Enable ADC
-  DMA1_Channel1->CCR |= DMA_CCR_EN;
+  // DMA1_Channel1->CCR |= DMA_CCR_EN;
   adc_s->CR |= ADC_CR_ADEN;
+
+  return ErrorStatus::SUCCESS;
 }
 
 void initIrqPriorities(void) {
@@ -674,19 +732,15 @@ int main(void) {
   // Fill the emitter BSRR array
   generateEmitterStateDataWrites();
   // Write emitter pin modes
-  configureEmitterPinModes();
+  initializeEmitterPins();
 
   // Set up NVIC priorities
   initIrqPriorities();
 
   initializeSampleFrontend();
-  configureSampleFrontend();
 
   // Allow analog circuits to settle
   HAL_Delay(100);
-
-  // Start first conversions to initialize arrays
-  startBackgroundSampling();
 
   // casm::fixedpos_t incremental_position, prv_inc_pos, absolute_position;
   // casm::fixedpos_t scaled_position, tare_position = 0;
@@ -703,11 +757,34 @@ int main(void) {
 
   smplidx_t prev_seq_num = 0, new_seq_num = 0;
 
+  uint32_t last_reported_error = 0;
+
   while (1) {
     Uart::pollCommands();
 
-    if (registers[ERROR_VALUE]) {
-      Uart::cprintf("ERROR DETECTED: registers[ERROR_VALUE] = 0x%x\n", registers[ERROR_VALUE]);
+    if (registers[ERROR_VALUE] != last_reported_error) {
+      // Only report if the error is newly high
+      if (registers[ERROR_VALUE] & (last_reported_error ^ registers[ERROR_VALUE])) {
+        Uart::cprintf("ERROR DETECTED: registers[ERROR_VALUE] = 0x%x\n", registers[ERROR_VALUE]);
+      }
+      last_reported_error = registers[ERROR_VALUE];
+    }
+
+    if (registers[SENSOR_STATE] == STATE_STOP) {
+      stopBackgroundSampling();
+      registers[SENSOR_STATE] = STATE_STOPPED;
+    }
+
+    if (registers[SENSOR_STATE] == STATE_STOPPED || registers[SENSOR_STATE] == STATE_ERROR) {
+      continue;
+    } else if (registers[SENSOR_STATE] == STATE_START_CONTINUOUS) {
+      if (configureSampleFrontend() != ErrorStatus::SUCCESS) {
+        error(ERRFLAG_BAD_CONFIG);
+        continue;
+      }
+      prev_seq_num = readings_sequence;
+      startBackgroundSampling();
+      registers[SENSOR_STATE] = STATE_CONTINUOUS;
     }
 
     // This is mostly historical now that DMA is used, but it can be good
