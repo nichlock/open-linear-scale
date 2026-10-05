@@ -13,8 +13,8 @@ READER_SCRIPT = Path(__file__).parent / "ImpuleReader.py"
 # Printed by ImpuleReader once the header is found and sample data starts.
 READER_SAMPLING_MARKER = "Reading samples..."
 
-ABS_Z_MIN = 145
-ABS_Z_MAX = 160
+ABS_Z_MIN = 0
+ABS_Z_MAX = 200
 
 SENSOR_PORT = "COM4"
 PRINTER_PORT = "COM6"
@@ -45,7 +45,6 @@ def prompt_test_parameters():
     end = float(input(f"End position (mm, {ABS_Z_MIN}-{ABS_Z_MAX}): ").strip())
     default_step = "0.01" if end >= start else "-0.01"
     stepsize = float(input(f"Step size (mm, signed) [{default_step}]: ").strip() or default_step)
-    cycles = int(input("Number of cycles: ").strip())
     rehome = input("Rehome? (y/n): ").strip()
 
     if not (ABS_Z_MIN <= start <= ABS_Z_MAX):
@@ -57,21 +56,17 @@ def prompt_test_parameters():
     if stepsize == 0 or (stepsize > 0) != (end > start):
         raise ValueError(f"stepsize {stepsize} must be nonzero and point from start {start} "
                          f"toward end {end}")
-    if cycles < 1:
-        raise ValueError(f"cycles {cycles} must be at least 1")
 
-    return output_dir, start, end, stepsize, cycles, rehome.lower() == 'y'
+    return output_dir, start, end, stepsize, rehome.lower() == 'y'
 
 
-def generate_cycle_positions(start, end, stepsize):
+def generate_positions(start, end, stepsize):
     # stepsize carries the direction of travel, so (end - start) / stepsize is
     # always positive whether the sweep runs up or down the axis.
     steps = round((end - start) / stepsize)
-    forward = [start + i * stepsize for i in range(steps)]
-    forward.append(end)
-    forward = [round(position, 6) for position in forward]
-    back = list(reversed(forward[:-1]))
-    return forward + back
+    positions = [start + i * stepsize for i in range(steps)]
+    positions.append(end)
+    return [round(position, 6) for position in positions]
 
 
 def connect_printer(port, baud):
@@ -223,16 +218,16 @@ def capture(sensor_port, gauge, output_dir, gauge_dir, sample_index, position):
 
 def main():
     args = parse_args()
-    output_dir, start, end, stepsize, cycles, rehome = prompt_test_parameters()
+    output_dir, start, end, stepsize, rehome = prompt_test_parameters()
     # Kept beside output_dir rather than inside it, since AccuracyAnalysis
     # expects every entry in output_dir to be a sensor capture.
     gauge_dir = output_dir.parent / f"{output_dir.name}_mitutoyo"
     gauge_dir.mkdir(parents=True, exist_ok=True)
 
-    positions = generate_cycle_positions(start, end, stepsize)
-    total_samples = len(positions) * cycles
-    print(f"Start={start} End={end} Step={stepsize} Cycles={cycles}")
-    print(f"{len(positions)} samples per cycle, {total_samples} samples total "
+    positions = generate_positions(start, end, stepsize)
+    total_samples = len(positions)
+    print(f"Start={start} End={end} Step={stepsize}")
+    print(f"{total_samples} samples total "
           f"(at least ~{total_samples * 2:.0f}s / {total_samples * 2 / 60:.1f}min)")
 
     input("This will home the printer and move its axes. Make sure the sensor "
@@ -251,16 +246,13 @@ def main():
         input(f"Printer homed and positioned at the start (Z={start}). Verify "
               "alignment, then press Enter to begin sampling...")
 
-        sample_index = 0
-        for cycle in range(1, cycles + 1):
-            for position in positions:
-                move_z(ser, position)
-                last_position = position
-                mean, std = capture(args.sensor_port, gauge, output_dir, gauge_dir,
-                                    sample_index, position)
-                sample_index += 1
-                print(f"cycle {cycle}/{cycles} sample {sample_index}/{total_samples} "
-                      f"z={position:.4f} gauge={mean:.4f} std={std:.4f}")
+        for sample_index, position in enumerate(positions):
+            move_z(ser, position)
+            last_position = position
+            mean, std = capture(args.sensor_port, gauge, output_dir, gauge_dir,
+                                sample_index, position)
+            print(f"sample {sample_index + 1}/{total_samples} "
+                  f"z={position:.4f} gauge={mean:.4f} std={std:.4f}")
     finally:
         ser.close()
         gauge.close()

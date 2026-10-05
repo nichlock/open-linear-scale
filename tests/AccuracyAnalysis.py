@@ -12,7 +12,8 @@ from scipy import signal as sig
 
 import os
 
-DIRECTORY = './accuracy'
+DIRECTORY = './data/accuracy2'
+MITUTOYO_DIRECTORY = './data/accuracy2_mitutoyo'
 
 NUM_EMITTERS = 4
 
@@ -122,38 +123,38 @@ def applyClearanceCorrection_Sinusoid(position_estimates: np.ndarray):
     return position_estimates + correction_offset, correction_offset
 
 
-def plotWrappedEstimates(estimate_positions, real_positions):
+def plotWrappedEstimates(estimate_positions, commanded_positions):
     estimate_positions -= np.mean(estimate_positions[0])
     estimate_positions %= 4
 
     # estimate_positions *= PERIOD_SIZE_MM / (NUM_EMITTERS*2)
 
-    real_positions %= 4
+    commanded_positions %= 4
 
     _, ax = plt.subplots(2, sharex=True)
     ax[0] = ax[0].twiny()
-    for pos in range(len(real_positions)):
-        ax[0].scatter(np.repeat(real_positions[pos], estimate_positions.shape[1]), estimate_positions[pos, :], c=f'C0', alpha=0.01)
-    ax[0].plot([np.min(real_positions), np.max(real_positions)], [np.min(real_positions), np.max(real_positions)], 'k--')
+    for pos in range(len(commanded_positions)):
+        ax[0].scatter(np.repeat(commanded_positions[pos], estimate_positions.shape[1]), estimate_positions[pos, :], c=f'C0', alpha=0.01)
+    ax[0].plot([np.min(commanded_positions), np.max(commanded_positions)], [np.min(commanded_positions), np.max(commanded_positions)], 'k--')
     ax[0].title.set_text('position estimate')
-    for pos in range(len(real_positions)):
+    for pos in range(len(commanded_positions)):
         ax[1].scatter(np.repeat(pos, estimate_positions.shape[1]), estimate_positions[pos, :], c='C0', alpha=0.01)
-    ax[1].plot(real_positions, 'k--')
+    ax[1].plot(commanded_positions, 'k--')
     ax[1].title.set_text('position estimate')
 
 
-def plotWrappedEstimatesNoScatter(estimate_positions, real_positions):
+def plotWrappedEstimatesNoScatter(estimate_positions, commanded_positions):
     estimate_positions -= np.mean(estimate_positions[0])
     estimate_positions %= 4
-    real_positions %= 4
+    commanded_positions %= 4
 
     _, ax = plt.subplots(2, sharex=True)
     ax[0] = ax[0].twiny()
-    ax[0].plot(real_positions, np.mean(estimate_positions, axis=-1), c=f'C0', alpha=0.01)
-    ax[0].plot([np.min(real_positions), np.max(real_positions)], [np.min(real_positions), np.max(real_positions)], 'k--')
+    ax[0].plot(commanded_positions, np.mean(estimate_positions, axis=-1), c=f'C0', alpha=0.01)
+    ax[0].plot([np.min(commanded_positions), np.max(commanded_positions)], [np.min(commanded_positions), np.max(commanded_positions)], 'k--')
     ax[0].title.set_text('position estimate')
     ax[1].plot(np.mean(estimate_positions, axis=-1), c=f'C0', alpha=0.01)
-    ax[1].plot(real_positions, 'k--')
+    ax[1].plot(commanded_positions, 'k--')
     ax[1].title.set_text('position estimate')
 
 
@@ -233,31 +234,31 @@ def focusPlotSingleEstimate(estimate_positions, raw_samples, focal_index):
     # ax[1].x_label.set_text('frequencies')
 
 
-def plotRawAgainstPos(real_positions, estimate_positions, raw_samples):
+def plotRawAgainstPos(commanded_positions, estimate_positions, raw_samples):
     _, ax = plt.subplots(2, sharex=True)
-    for pos in range(len(real_positions)):
+    for pos in range(len(commanded_positions)):
         for idx in range(4):
-            ax[0].scatter(np.repeat(real_positions[pos], raw_samples.shape[1]), raw_samples[pos, :, idx], c=f'C{idx}', alpha=0.1)
+            ax[0].scatter(np.repeat(commanded_positions[pos], raw_samples.shape[1]), raw_samples[pos, :, idx], c=f'C{idx}', alpha=0.1)
     ax[0].title.set_text('phase 0')
-    for pos in range(len(real_positions)):
+    for pos in range(len(commanded_positions)):
         for idx in range(4):
-            ax[1].scatter(np.repeat(real_positions[pos], raw_samples.shape[1]), raw_samples[pos, :, idx + 4], c=f'C{idx}', alpha=0.1)
+            ax[1].scatter(np.repeat(commanded_positions[pos], raw_samples.shape[1]), raw_samples[pos, :, idx + 4], c=f'C{idx}', alpha=0.1)
     ax[1].title.set_text('phase 1')
 
     _, ax = plt.subplots(3, sharex=True)
     for tr in range(4):
-        ax[0].plot(real_positions, np.mean(raw_samples[:, :, tr], axis=-1), c=f'C{tr}', alpha=0.5)
+        ax[0].plot(commanded_positions, np.mean(raw_samples[:, :, tr], axis=-1), c=f'C{tr}', alpha=0.5)
     ax[0].title.set_text('phase 0')
     for tr in range(4):
-        ax[1].plot(real_positions, np.mean(raw_samples[:, :, tr + 4], axis=-1), c=f'C{tr}', alpha=0.5)
+        ax[1].plot(commanded_positions, np.mean(raw_samples[:, :, tr + 4], axis=-1), c=f'C{tr}', alpha=0.5)
     ax[1].title.set_text('phase 1')
-    ax[2].plot(real_positions, np.mean(estimate_positions, axis=-1))
-    # ax[2].fill_between(real_positions, np.min(estimate_positions, axis=-1), np.max(estimate_positions, axis=-1))
-    ax[2].plot(real_positions, real_positions, 'k--', alpha=0.5)
+    ax[2].plot(commanded_positions, np.mean(estimate_positions, axis=-1))
+    # ax[2].fill_between(commanded_positions, np.min(estimate_positions, axis=-1), np.max(estimate_positions, axis=-1))
+    ax[2].plot(commanded_positions, commanded_positions, 'k--', alpha=0.5)
     ax[2].title.set_text('Position Estimate')
 
 
-def plotRawPlain(real_positions, raw_samples):
+def plotRawPlain(commanded_positions, raw_samples):
     _, ax = plt.subplots(3, sharex=True)
     for tr in range(4):
         ax[0].plot(np.mean(raw_samples[:, :, tr], axis=-1), c=f'C{tr}', alpha=0.5)
@@ -265,7 +266,7 @@ def plotRawPlain(real_positions, raw_samples):
     for tr in range(4):
         ax[1].plot(np.mean(raw_samples[:, :, tr + 4], axis=-1), c=f'C{tr}', alpha=0.5)
     ax[1].title.set_text('phase 1')
-    ax[2].plot(real_positions, 'k--', alpha=0.5)
+    ax[2].plot(commanded_positions, 'k--', alpha=0.5)
     ax[2].title.set_text('Position')
 
 
@@ -276,7 +277,7 @@ def wrappedDifference(arr, brr, maxval=4):
     return ((((arr - brr) + (maxval/2)) % maxval) - (maxval/2))
 
 
-def plotNoiseLevels(estimate_positions, real_positions, raw_samples, sample_period):
+def plotNoiseLevels(estimate_positions, commanded_positions, raw_samples, sample_period):
     processed_std = np.std(estimate_positions, axis=-1)
     raw_std = np.std(raw_samples, axis=1)
 
@@ -285,9 +286,9 @@ def plotNoiseLevels(estimate_positions, real_positions, raw_samples, sample_peri
 
     # estimate_positions -= np.mean(estimate_positions[0])
     # estimate_positions %= 4
-    # real_positions %= 4
+    # commanded_positions %= 4
 
-    wrapped_real_positions = (real_positions / EMITTERS_TO_MM) % 4
+    wrapped_real_positions = (commanded_positions / EMITTERS_TO_MM) % 4
     estimate_positions -= estimate_positions[0]
     estimate_positions %= 4
 
@@ -375,17 +376,43 @@ def unwrapEstimates(estimate_positions):
     return unwrapped - unwrapped[0, 0]
 
 
+def loadMitutoyoData(directory=MITUTOYO_DIRECTORY):
+    '''
+    Load the Mitutoyo gauge readings captured alongside each sensor sample set.
+
+    Returns arrays (one entry per file, in capture order) of:
+    commanded_positions, measured_positions, measured_stds
+    '''
+    files = [f for f in os.listdir(directory) if f.endswith('.json')]
+    files.sort(key=lambda fname: int(fname[:-5].split('_')[0]))
+
+    commanded_positions = []
+    measured_positions = []
+    measured_stds = []
+    for filename in files:
+        with open(os.path.join(directory, filename), 'r') as f:
+            data = json.load(f)
+        commanded_positions.append(data['commanded_position'])
+        measured_positions.append(data['measured_position'])
+        measured_stds.append(data['measured_std'])
+
+    return np.array(commanded_positions), np.array(measured_positions), np.array(measured_stds)
+
+
 def main():
+    gauge_commanded, gauge_measured, gauge_std = loadMitutoyoData()
+    print(f'Loaded {len(gauge_measured)} Mitutoyo readings')
+
     files = os.listdir(DIRECTORY)
     files = list(filter(lambda x: 'Accuracy' not in x, files))
     files.sort(key=lambda fname: float(fname[:-5].split('_')[0]))
 
     print(f'Loading {len(files)} sample sets')
 
-    real_positions = [float(fname[:-5].split('_')[-1]) for fname in files]
-    real_positions = np.array(real_positions)
+    commanded_positions = [float(fname[:-5].split('_')[-1]) for fname in files]
+    commanded_positions = np.array(commanded_positions)
 
-    real_positions -= real_positions[0]
+    commanded_positions -= commanded_positions[0]
 
     estimate_positions = []
     raw_samples = []
@@ -418,14 +445,14 @@ def main():
     print('estimate_positions:', estimate_positions.shape)
     print('raw_samples:', raw_samples.shape)
 
-    # plotNoiseLevels(estimate_positions.copy(), real_positions.copy(), raw_samples.copy(), sample_period)
+    # plotNoiseLevels(estimate_positions.copy(), commanded_positions.copy(), raw_samples.copy(), sample_period)
 
     # Bring the real positions into units common to the estimates
     # so that they can be wrapped around 4 for easier viewing
-    real_positions /= EMITTERS_TO_MM
+    # commanded_positions /= EMITTERS_TO_MM
 
-    # plotWrappedEstimates(4 - estimate_positions.copy(), real_positions.copy())
-    # plotWrappedEstimatesNoScatter(estimate_positions.copy(), real_positions.copy())
+    # plotWrappedEstimates(4 - estimate_positions.copy(), commanded_positions.copy())
+    # plotWrappedEstimatesNoScatter(estimate_positions.copy(), commanded_positions.copy())
     # focusPlotSingleEstimate(estimate_positions.copy(),
     #                         raw_samples.copy(),
     #                         1)
@@ -444,33 +471,45 @@ def main():
 
     unwrapped = unwrapEstimates(NUM_EMITTERS - estimate_positions)
 
-    averaged_unwrapped = np.mean(unwrapped, axis=-1)
-    averaged_error = (averaged_unwrapped - real_positions)
+    unwrapped *= EMITTERS_TO_MM
+    commanded_positions = -(commanded_positions-commanded_positions[0])
+    gauge_measured -= gauge_measured[0]
 
-    # plt.figure()
-    # plt.plot(unwrapped)
-    # plt.plot(real_positions, '--k')
+    averaged_unwrapped = np.mean(unwrapped, axis=-1)
+    averaged_error = (averaged_unwrapped - gauge_measured)
 
     lin_estimates, l_corr = applyClearanceCorrection_Linear(NUM_EMITTERS - estimate_positions)
     lin_unwrapped = unwrapEstimates(lin_estimates)
-    lin_averaged_error = np.mean(lin_unwrapped, axis=-1) - real_positions
-
-    sin_estimates, s_corr = applyClearanceCorrection_Sinusoid(NUM_EMITTERS - estimate_positions)
-    sin_unwrapped = unwrapEstimates(sin_estimates)
-    sin_averaged_error = np.mean(sin_unwrapped, axis=-1) - real_positions
+    lin_unwrapped *= EMITTERS_TO_MM
+    lin_averaged = np.mean(lin_unwrapped, axis=-1)
+    lin_averaged_error = lin_averaged - gauge_measured
 
     plt.figure()
-    plt.plot(real_positions-real_positions[0], averaged_error * EMITTERS_TO_MM, label='Error')
-    plt.plot(real_positions-real_positions[0], lin_averaged_error * EMITTERS_TO_MM, label='Linear Correction')
-    # plt.plot(real_positions-real_positions[0], np.mean(l_corr, axis=-1), '--', color='C1', label='Linear Factor')
-    plt.plot(real_positions-real_positions[0], sin_averaged_error * EMITTERS_TO_MM, label='Sinusoidal Correction')
-    # plt.plot(real_positions-real_positions[0], np.mean(s_corr, axis=-1), '--', color='C2', label='Sinusoidal Factor')
-    extended_real_positions = np.repeat(real_positions[:, np.newaxis], unwrapped.shape[-1], axis=-1)
+    plt.plot(averaged_unwrapped, label='unwrapped')
+    plt.plot(gauge_measured, label='gauge_measured')
+    plt.plot(lin_averaged, label='lin_averaged')
+    plt.plot(commanded_positions, '--k', label='commanded_positions')
+    plt.legend()
+
+    # sin_estimates, s_corr = applyClearanceCorrection_Sinusoid(NUM_EMITTERS - estimate_positions)
+    # sin_unwrapped = unwrapEstimates(sin_estimates)
+    # sin_averaged_error = np.mean(sin_unwrapped, axis=-1) - gauge_measured
+
+    plt.figure()
+    plt.plot(gauge_measured, averaged_error, label='Error')
+    # plt.plot(gauge_measured, lin_averaged_error, label='Linear Correction')
+    # plt.plot(gauge_measured, np.mean(l_corr, axis=-1), '--', color='C1', label='Linear Factor')
+    extended_real_positions = np.repeat(gauge_measured[:, np.newaxis], unwrapped.shape[-1], axis=-1)
     flattened_error = np.array((unwrapped - extended_real_positions).flat)
-    plt.scatter(extended_real_positions-extended_real_positions[0], flattened_error * EMITTERS_TO_MM)
-    plt.title('Error')
+    plt.scatter(extended_real_positions-extended_real_positions[0], flattened_error, label='Flat error')
+    plt.title('Error to Measured')
     plt.ylabel('Error (mm)')
     plt.xlabel('Offset (mm)')
+    plt.twinx()
+    # plt.plot(gauge_measured, np.mean(estimate_positions, axis=-1), label='Emitter Position')
+    for tr in range(8):
+        plt.plot(gauge_measured, np.mean(raw_samples, axis=1)[:, [tr]], label=f'TR{tr}')
+    plt.ylabel('Emitter Position')
 
     plt.legend()
 
@@ -481,12 +520,12 @@ def main():
     # plt.ylabel('Error (emitter widths)')
     # plt.xlabel('Emitter Position (emitter widths)')
 
-    # plt.figure()
-    # plt.scatter(np.mean(estimate_positions, axis=-1), lin_averaged_error)
-    # plt.grid()
-    # plt.title('New Error')
-    # plt.ylabel('Error (emitter widths)')
-    # plt.xlabel('Emitter Position (emitter widths)')
+    plt.figure()
+    plt.scatter(np.mean(estimate_positions, axis=-1), averaged_error)
+    plt.grid()
+    plt.title('New Error')
+    plt.ylabel('Error (emitter widths)')
+    plt.xlabel('Emitter Position (emitter widths)')
 
     # plt.figure()
     # plt.scatter(np.mean(estimate_positions, axis=-1), averaged_error)
@@ -495,21 +534,19 @@ def main():
     # plt.ylabel('Error (emitter widths)')
     # plt.xlabel('Emitter Position (emitter widths)')
 
-    error_fft = np.fft.rfft(averaged_error)
-    lin_error_fft = np.fft.rfft(lin_averaged_error)
-    sin_error_fft = np.fft.rfft(sin_averaged_error)
-    error_frequencies = np.fft.rfftfreq(len(averaged_error), real_positions[1] - real_positions[0])
-    error_periods = 1 / error_frequencies
-    plt.figure()
-    plt.plot(error_periods, 10*np.log10(np.abs(error_fft)), label='Original')
-    plt.plot(error_periods, 10*np.log10(np.abs(lin_error_fft)), label='Linear Correction')
-    plt.plot(error_periods, 10*np.log10(np.abs(sin_error_fft)), label='Sinusoidal Correction')
-    plt.semilogx()
-    plt.grid()
-    plt.title("Periodic Spacial Error")
-    plt.ylabel('Error (dB)')
-    plt.xlabel('Error Period (emitter widths)')
-    plt.legend()
+    # error_fft = np.fft.rfft(averaged_error)
+    # lin_error_fft = np.fft.rfft(lin_averaged_error)
+    # error_frequencies = np.fft.rfftfreq(len(averaged_error), commanded_positions[1] - commanded_positions[0])
+    # error_periods = 1 / error_frequencies
+    # plt.figure()
+    # plt.plot(error_periods, 10*np.log10(np.abs(error_fft)), label='Original')
+    # plt.plot(error_periods, 10*np.log10(np.abs(lin_error_fft)), label='Linear Correction')
+    # plt.semilogx()
+    # plt.grid()
+    # plt.title("Periodic Spacial Error")
+    # plt.ylabel('Error (dB)')
+    # plt.xlabel('Error Period (emitter widths)')
+    # plt.legend()
 
     plt.show()
 
