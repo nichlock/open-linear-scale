@@ -110,11 +110,11 @@ const uint8_t P_WR = 0x4;
   X(SENSOR_STATE                 , STATE_START_CONTINUOUS                , P_RD | P_WP | P_WR) \
   X(CONVERSION_FACTOR            , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
-  X(SENSOR_INPUT                 , INPUT_FILTER                          , P_RD | P_WP) \
-  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_RAW                 , P_RD | P_WP) \
-  X(SENSOR_ALGORITHM             , ALGO_DBG_IND_EMITTERS                   , P_RD | P_WP) \
+  X(SENSOR_INPUT                 , INPUT_INTEGRATOR                      , P_RD | P_WP) \
+  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_RAW                  , P_RD | P_WP) \
+  X(SENSOR_ALGORITHM             , ALGO_DBG_IND_EMITTERS                 , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
-  X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
+  X(TX_RX_DELAY_US               , 10                                    , P_RD | P_WP) \
   X(CONVERSION_WINDOW            , LL_ADC_SAMPLINGTIME_12CYCLES_5        , P_RD | P_WP) \
   X(DISCARD_FIRST_SEQUENCE       , 1                                     , P_RD | P_WP) \
   X(BURST_COUNT                  , 2048                                  , P_RD | P_WP) \
@@ -126,6 +126,8 @@ const uint8_t P_WR = 0x4;
   X(SEQUENCE_TIMER_FREQ          , 0                                     , P_RD) \
   X(TRUE_CONV_PER_OVERSAMPLE     , 0                                     , P_RD) \
   X(TRUE_ADC_OVERSAMPLE_TIME_NS  , 0                                     , P_RD) \
+  /* Debug: delay main-loop processing until tx_step reaches this value (0 = no delay) */ \
+  X(PROCESS_START_STEP           , 0                                     , P_RD | P_WP) \
   // clang-format on
 
 enum RegIndex : uint8_t {
@@ -206,7 +208,7 @@ const static uint32_t emitter_pins[casm::EMITTER_COUNT] = {13, 14, 15, 9, 8, 7, 
 /// The emitter port. All emitters are on one port by design.
 #define emitter_GPIOx GPIOC
 
-uint32_t emitter_state_gpio_bsrr[casm::EMITTER_STATE_COUNT];
+uint32_t emitter_state_gpio_bsrr[casm::EMITTER_STATE_COUNT] = {0};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sample config
@@ -327,6 +329,8 @@ void startBackgroundSampling(void) {
 
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
+  // HAL_SuspendTick();
+
   // Enable timer counting
   tim_s->CR1 |= TIM_CR1_CEN;
 }
@@ -356,6 +360,7 @@ void stopBackgroundSampling(void) {
       __WFE();
     }
   }
+  // HAL_ResumeTick();
 }
 
 bool isSampleRunning() {
@@ -397,14 +402,22 @@ smplidx_t waitForCurrentSequenceEnd() {
   return readings_sequence;
 }
 
+/// Sleep until the emitter sequence reaches the given step. tx_step is the
+/// next state to be written, so a value of 9 means state 8 was just output.
+void waitForTxStep(smplidx_t step) {
+  while (*(volatile smplidx_t*)&tx_step < step) {
+    __WFE();
+  }
+}
+
 void safePullReadings(adcreading_t destination[16]) {
   smplidx_t seq_before, seq_after;
   do {
-    __disable_irq();
+    NVIC_DisableIRQ(DMA1_Channel1_IRQn);
     seq_before = readings_sequence;
     memcpy(destination, readings_shared, sizeof(readings_shared));
     seq_after = readings_sequence;
-    __enable_irq();
+    NVIC_EnableIRQ(DMA1_Channel1_IRQn);
   } while (seq_before != seq_after);
 }
 
@@ -819,6 +832,12 @@ int main(void) {
     }
 
     new_seq_num = waitForCurrentSequenceEnd();
+
+    // Debug: push the processing load later into the sequence to check
+    // whether CPU activity is disturbing the readings near the boundary.
+    if (registers[PROCESS_START_STEP]) {
+      waitForTxStep(registers[PROCESS_START_STEP]);
+    }
 
     if (smplidx_t(prev_seq_num + 1) != new_seq_num) {
       Uart::cprintf("Missed sequences (%d, %d)\n", prev_seq_num, new_seq_num);
