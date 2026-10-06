@@ -12,8 +12,13 @@ from scipy import signal as sig
 
 import os
 
+ALLOW_PKL = False
+
 DIRECTORY = './data/accuracy2'
 MITUTOYO_DIRECTORY = './data/accuracy2_mitutoyo'
+
+# DIRECTORY = './data/accuracy'
+# MITUTOYO_DIRECTORY = './data/accuracy_mitutoyo'
 
 NUM_EMITTERS = 4
 
@@ -400,9 +405,6 @@ def loadMitutoyoData(directory=MITUTOYO_DIRECTORY):
 
 
 def main():
-    gauge_commanded, gauge_measured, gauge_std = loadMitutoyoData()
-    print(f'Loaded {len(gauge_measured)} Mitutoyo readings')
-
     files = os.listdir(DIRECTORY)
     files = list(filter(lambda x: 'Accuracy' not in x, files))
     files.sort(key=lambda fname: float(fname[:-5].split('_')[0]))
@@ -414,13 +416,19 @@ def main():
 
     commanded_positions -= commanded_positions[0]
 
+    try:
+        gauge_commanded, gauge_measured, gauge_std = loadMitutoyoData()
+        print(f'Loaded {len(gauge_measured)} Mitutoyo readings')
+    except:
+        gauge_measured = -commanded_positions
+
     estimate_positions = []
     raw_samples = []
 
     sample_period = np.nan
 
     backup = os.path.join(DIRECTORY, 'AccuracyAnalysis.pkl')
-    if os.path.exists(backup):
+    if os.path.exists(backup) and ALLOW_PKL:
         with open(backup, 'rb') as f:
             raw_samples, estimate_positions, sample_period = pkl.load(f)
     else:

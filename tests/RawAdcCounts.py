@@ -148,7 +148,7 @@ def main():
     print(f'Overall std:      {raw_std:0.2f} counts')
     print(f'Range/STD:        {10*np.log10(raw_range / raw_std):0.2f} dB')
 
-    focusSamples(time_ms, samples[:, 0], samples[:, 1])
+    # focusSamples(time_ms, samples[:, 0], samples[:, 1])
 
     # plt.show()
     # exit()
@@ -178,37 +178,37 @@ def main():
 
     plt.tight_layout()
 
-    plt.figure()
-    plt.hist(samples - np.mean(samples, axis=0), alpha=0.3)
+    # plt.figure()
+    # plt.hist(samples - np.mean(samples, axis=0), alpha=0.3)
 
-    plt.figure()
-    tr = 1
-    plt.plot(time_ms, samples[:, tr] - np.mean(samples[:, tr]), alpha=0.5, label=f'samples - {np.mean(samples[:, tr]):0.0f}')
-    plt.legend()
-    plt.title('Mean-subtracted transient values')
-    plt.xlabel('Time (ms)')
-    plt.ylabel('Magnitude Minus Mean')
-    plt.tight_layout()
+    # plt.figure()
+    # tr = 1
+    # plt.plot(time_ms, samples[:, tr] - np.mean(samples[:, tr]), alpha=0.5, label=f'samples - {np.mean(samples[:, tr]):0.0f}')
+    # plt.legend()
+    # plt.title('Mean-subtracted transient values')
+    # plt.xlabel('Time (ms)')
+    # plt.ylabel('Magnitude Minus Mean')
+    # plt.tight_layout()
 
-    _, ax = plt.subplots(8)
-    for tr in range(8):
-        freqs_z, welch_z = sig.welch(samples[:, tr], 1/sample_period)
-        ax[tr].plot(freqs_z, 10*np.log10(welch_z), alpha=0.5, label='PSD')
-        ax[tr].set_ylabel('Magnitude (dB)')
+    # _, ax = plt.subplots(8)
+    # for tr in range(8):
+    #     freqs_z, welch_z = sig.welch(samples[:, tr], 1/sample_period)
+    #     ax[tr].plot(freqs_z, 10*np.log10(welch_z), alpha=0.5, label='PSD')
+    #     ax[tr].set_ylabel('Magnitude (dB)')
 
-    ax[0].set_xlabel('Frequency (Hz)')
-    # ax[0].legend()
-    plt.suptitle('PSD')
+    # ax[0].set_xlabel('Frequency (Hz)')
+    # # ax[0].legend()
+    # plt.suptitle('PSD')
 
-    _, ax = plt.subplots(8)
-    for tr in range(8):
-        freqs = np.fft.rfftfreq(len(samples[:, tr]), sample_period)
-        fft = np.fft.rfft(samples[:, tr])
-        ax[tr].plot(freqs[1:], 10*np.log10(np.abs(fft[1:])), alpha=0.5, label='FFT')
-        ax[tr].set_ylabel('Magnitude (dB)')
+    # _, ax = plt.subplots(8)
+    # for tr in range(8):
+    #     freqs = np.fft.rfftfreq(len(samples[:, tr]), sample_period)
+    #     fft = np.fft.rfft(samples[:, tr])
+    #     ax[tr].plot(freqs[1:], 10*np.log10(np.abs(fft[1:])), alpha=0.5, label='FFT')
+    #     ax[tr].set_ylabel('Magnitude (dB)')
 
-    ax[0].set_xlabel('Frequency (Hz)')
-    plt.suptitle('FFT')
+    # ax[0].set_xlabel('Frequency (Hz)')
+    # plt.suptitle('FFT')
 
 
 if __name__ == "__main__":
