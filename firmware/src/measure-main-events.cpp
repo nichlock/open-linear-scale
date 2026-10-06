@@ -110,11 +110,11 @@ const uint8_t P_WR = 0x4;
   X(SENSOR_STATE                 , STATE_START_CONTINUOUS                , P_RD | P_WP | P_WR) \
   X(CONVERSION_FACTOR            , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
-  X(SENSOR_INPUT                 , INPUT_INTEGRATOR                      , P_RD | P_WP) \
+  X(SENSOR_INPUT                 , INPUT_FILTER                      , P_RD | P_WP) \
   X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_RAW                  , P_RD | P_WP) \
   X(SENSOR_ALGORITHM             , ALGO_DBG_IND_EMITTERS                 , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
-  X(TX_RX_DELAY_US               , 10                                    , P_RD | P_WP) \
+  X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
   X(CONVERSION_WINDOW            , LL_ADC_SAMPLINGTIME_12CYCLES_5        , P_RD | P_WP) \
   X(DISCARD_FIRST_SEQUENCE       , 1                                     , P_RD | P_WP) \
   X(BURST_COUNT                  , 2048                                  , P_RD | P_WP) \
@@ -126,8 +126,6 @@ const uint8_t P_WR = 0x4;
   X(SEQUENCE_TIMER_FREQ          , 0                                     , P_RD) \
   X(TRUE_CONV_PER_OVERSAMPLE     , 0                                     , P_RD) \
   X(TRUE_ADC_OVERSAMPLE_TIME_NS  , 0                                     , P_RD) \
-  /* Debug: delay main-loop processing until tx_step reaches this value (0 = no delay) */ \
-  X(PROCESS_START_STEP           , 0                                     , P_RD | P_WP) \
   // clang-format on
 
 enum RegIndex : uint8_t {
@@ -164,8 +162,8 @@ typedef enum {
   ERRFLAG_BAD_SENSOR_INPUT        = 1ul << 1,
   ERRFLAG_BAD_SEQUENCE_TIMING     = 1ul << 2,
   ERRFLAG_UNKOWN_ALGO             = 1ul << 4,
-  // ERRFLAG_RESERVED                = 1ul << 5,
-  // ERRFLAG_RESERVED                = 1ul << 6,
+  ERRFLAG_EMITTER_DMA             = 1ul << 5,   // Transfer error on the emitter DMA channel
+  ERRFLAG_ADC_DMA                 = 1ul << 6,   // Transfer error on the ADC DMA channel
   // ERRFLAG_RESERVED                = 1ul << 7,
   // ERRFLAG_RESERVED                = 1ul << 8,
   // ERRFLAG_RESERVED                = 1ul << 9,
@@ -266,6 +264,12 @@ void ADC1_2_IRQHandler(void) {
 }  // ADC1_2_IRQHandler
 
 void DMA1_Channel1_IRQHandler(void) {
+  if (DMA1->ISR & DMA_ISR_TEIF1) {
+    DMA1->IFCR = DMA_IFCR_CGIF1;
+    error(ERRFLAG_ADC_DMA);
+    return;
+  }
+
   DMA1_Channel1->CCR &= ~DMA_CCR_EN;
   DMA1_Channel1->CNDTR = casm::EMITTER_STATE_COUNT;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
@@ -275,26 +279,10 @@ void DMA1_Channel1_IRQHandler(void) {
   readings_sequence++;
 }
 
-void TIM2_IRQHandler(void) {
-  if (tim_s->SR & TIM_FLAG_UPDATE) {
-    if (tx_step >= int32_t(casm::EMITTER_STATE_COUNT)) {
-      error(ERRFLAG_TIMER_INTERRUPT);
-      return;
-    }
-    emitter_GPIOx->BSRR = emitter_state_gpio_bsrr[tx_step];
-
-    // I check before incrementing here. That's only so that input mode
-    // INPUT_COUNTER doesn't produce confusing results.
-    if (tx_step + 1 >= int32_t(casm::EMITTER_STATE_COUNT)) {
-      tx_step = 0;
-    } else {
-      tx_step += 1;
-    }
-
-    tim_s->SR = ~(TIM_FLAG_UPDATE);
-  } else {
-    // For some reason this IRQ is triggered without TIM_FLAG_UPDATE being raised
-    // For now I'm not counting this as an error
+void DMA1_Channel2_IRQHandler(void) {
+  if (DMA1->ISR & DMA_ISR_TEIF2) {
+    DMA1->IFCR = DMA_IFCR_CGIF2;
+    error(ERRFLAG_EMITTER_DMA);
   }
 }
 
@@ -307,10 +295,13 @@ void startBackgroundSampling(void) {
 
   DMA1_Channel1->CNDTR = casm::EMITTER_STATE_COUNT;
 
+  // Restart the emitter table from state 0, even after a mid-sequence stop
+  DMA1_Channel2->CNDTR = casm::EMITTER_STATE_COUNT;
+
   __disable_irq();
   HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
-  HAL_NVIC_EnableIRQ(TIM2_IRQn);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
   __enable_irq();
 
   adc_s->CR |= ADC_CR_ADEN;
@@ -324,12 +315,15 @@ void startBackgroundSampling(void) {
   // to wait for a trigger from the timer.
   LL_ADC_REG_StartConversion(adc_s);
 
-  // Enable timer interrupt on counter overflow
-  tim_s->DIER |= TIM_DIER_UIE;
+  // The emitter DMA must be armed before update requests are enabled so the
+  // first update event is not missed.
+  tim_s->SR = 0;
+  DMA1_Channel2->CCR |= DMA_CCR_EN;
+
+  // Enable timer interrupt and emitter DMA request on counter overflow
+  tim_s->DIER |= TIM_DIER_UDE;
 
   DMA1_Channel1->CCR |= DMA_CCR_EN;
-
-  // HAL_SuspendTick();
 
   // Enable timer counting
   tim_s->CR1 |= TIM_CR1_CEN;
@@ -337,6 +331,8 @@ void startBackgroundSampling(void) {
 
 void stopBackgroundSampling(void) {
   tim_s->CR1 &= ~TIM_CR1_CEN;
+  tim_s->DIER &= ~TIM_DIER_UDE;
+  DMA1_Channel2->CCR &= ~DMA_CCR_EN;
   LL_ADC_REG_StopConversion(adc_s);
   DMA1_Channel1->CCR &= ~DMA_CCR_EN;
 
@@ -345,7 +341,7 @@ void stopBackgroundSampling(void) {
   __disable_irq();
   HAL_NVIC_DisableIRQ(ADC1_2_IRQn);
   HAL_NVIC_DisableIRQ(DMA1_Channel1_IRQn);
-  HAL_NVIC_DisableIRQ(TIM2_IRQn);
+  HAL_NVIC_DisableIRQ(DMA1_Channel2_IRQn);
   __enable_irq();
 
   if (LL_ADC_IsEnabled(adc_s)) {
@@ -360,7 +356,6 @@ void stopBackgroundSampling(void) {
       __WFE();
     }
   }
-  // HAL_ResumeTick();
 }
 
 bool isSampleRunning() {
@@ -400,14 +395,6 @@ smplidx_t waitForCurrentSequenceEnd() {
     __WFE();
   }
   return readings_sequence;
-}
-
-/// Sleep until the emitter sequence reaches the given step. tx_step is the
-/// next state to be written, so a value of 9 means state 8 was just output.
-void waitForTxStep(smplidx_t step) {
-  while (*(volatile smplidx_t*)&tx_step < step) {
-    __WFE();
-  }
 }
 
 void safePullReadings(adcreading_t destination[16]) {
@@ -582,7 +569,17 @@ void initializeSampleFrontend() {
   DMA1_CSELR->CSELR &= ~DMA_CSELR_C1S_Msk;
 
   DMA1_Channel1->CCR = 0;
-  DMA1_Channel1->CCR = DMA_CCR_TCIE | DMA_CCR_MINC | DMA_CCR_PSIZE_1 | DMA_CCR_MSIZE_1 | DMA_CCR_PL_1;
+  DMA1_Channel1->CCR = DMA_CCR_TCIE | DMA_CCR_TEIE | DMA_CCR_MINC | DMA_CCR_PSIZE_1 | DMA_CCR_MSIZE_1 | DMA_CCR_PL_1;
+
+  // Configure timer for emitter GPIO writes
+  DMA1_CSELR->CSELR &= ~DMA_CSELR_C2S_Msk;
+  DMA1_CSELR->CSELR |= 0x4ul << DMA_CSELR_C2S_Pos;  // TIM2_UP
+
+  DMA1_Channel2->CCR = 0;
+  DMA1_Channel2->CCR = DMA_CCR_DIR | DMA_CCR_CIRC | DMA_CCR_MINC | DMA_CCR_PSIZE_1 | DMA_CCR_MSIZE_1 |
+                       DMA_CCR_PL_1 | DMA_CCR_PL_0 | DMA_CCR_TEIE;
+  DMA1_Channel2->CPAR = (uint32_t)(&emitter_GPIOx->BSRR);
+  DMA1_Channel2->CMAR = (uint32_t)emitter_state_gpio_bsrr;
 }
 
 ErrorStatus configureSampleFrontend() {
@@ -704,11 +701,11 @@ ErrorStatus configureSampleFrontend() {
 void initIrqPriorities(void) {
   int priority = 0;
 
-  HAL_NVIC_SetPriority(TIM2_IRQn, priority++, 0);
-  HAL_NVIC_EnableIRQ(TIM2_IRQn);
-
   HAL_NVIC_SetPriority(DMA1_Channel1_IRQn, priority++, 0);
   HAL_NVIC_EnableIRQ(DMA1_Channel1_IRQn);
+
+  HAL_NVIC_SetPriority(DMA1_Channel2_IRQn, priority++, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Channel2_IRQn);
 
   HAL_NVIC_SetPriority(ADC1_2_IRQn, priority++, 0);
   HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
@@ -832,12 +829,6 @@ int main(void) {
     }
 
     new_seq_num = waitForCurrentSequenceEnd();
-
-    // Debug: push the processing load later into the sequence to check
-    // whether CPU activity is disturbing the readings near the boundary.
-    if (registers[PROCESS_START_STEP]) {
-      waitForTxStep(registers[PROCESS_START_STEP]);
-    }
 
     if (smplidx_t(prev_seq_num + 1) != new_seq_num) {
       Uart::cprintf("Missed sequences (%d, %d)\n", prev_seq_num, new_seq_num);
