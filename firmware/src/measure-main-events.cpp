@@ -111,8 +111,8 @@ const uint8_t P_WR = 0x4;
   X(CONVERSION_FACTOR            , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
   X(SENSOR_INPUT                 , INPUT_FILTER                      , P_RD | P_WP) \
-  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_RAW                  , P_RD | P_WP) \
-  X(SENSOR_ALGORITHM             , ALGO_DBG_IND_EMITTERS                 , P_RD | P_WP) \
+  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_DIFF                  , P_RD | P_WP) \
+  X(SENSOR_ALGORITHM             , ALGO_SLIDING_WINDOW                 , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
   X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
   X(CONVERSION_WINDOW            , LL_ADC_SAMPLINGTIME_12CYCLES_5        , P_RD | P_WP) \
