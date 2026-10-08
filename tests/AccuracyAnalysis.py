@@ -14,8 +14,8 @@ import os
 
 ALLOW_PKL = False
 
-DIRECTORY = './data/accuracy2'
-MITUTOYO_DIRECTORY = './data/accuracy2_mitutoyo'
+DIRECTORY = './data/accuracy-4layer'
+MITUTOYO_DIRECTORY = './data/accuracy-4layer_mitutoyo'
 
 # DIRECTORY = './data/accuracy'
 # MITUTOYO_DIRECTORY = './data/accuracy_mitutoyo'
@@ -461,12 +461,12 @@ def main():
 
     # plotWrappedEstimates(4 - estimate_positions.copy(), commanded_positions.copy())
     # plotWrappedEstimatesNoScatter(estimate_positions.copy(), commanded_positions.copy())
-    # focusPlotSingleEstimate(estimate_positions.copy(),
-    #                         raw_samples.copy(),
-    #                         1)
-    # focusPlotSingleEstimate(estimate_positions.copy(),
-    #                         raw_samples.copy(),
-    #                         2)
+    focusPlotSingleEstimate(estimate_positions.copy(),
+                            raw_samples.copy(),
+                            1)
+    focusPlotSingleEstimate(estimate_positions.copy(),
+                            raw_samples.copy(),
+                            2)
     # focusPlotSingleEstimate(estimate_positions.copy(),
     #                         raw_samples.copy(),
     #                         3)
@@ -509,7 +509,7 @@ def main():
     # plt.plot(gauge_measured, np.mean(l_corr, axis=-1), '--', color='C1', label='Linear Factor')
     extended_real_positions = np.repeat(gauge_measured[:, np.newaxis], unwrapped.shape[-1], axis=-1)
     flattened_error = np.array((unwrapped - extended_real_positions).flat)
-    plt.scatter(extended_real_positions-extended_real_positions[0], flattened_error, label='Flat error')
+    plt.scatter(extended_real_positions-extended_real_positions[0], flattened_error, label='Flat error', alpha=0.01)
     plt.title('Error to Measured')
     plt.ylabel('Error (mm)')
     plt.xlabel('Offset (mm)')
@@ -542,19 +542,19 @@ def main():
     # plt.ylabel('Error (emitter widths)')
     # plt.xlabel('Emitter Position (emitter widths)')
 
-    # error_fft = np.fft.rfft(averaged_error)
-    # lin_error_fft = np.fft.rfft(lin_averaged_error)
-    # error_frequencies = np.fft.rfftfreq(len(averaged_error), commanded_positions[1] - commanded_positions[0])
-    # error_periods = 1 / error_frequencies
-    # plt.figure()
-    # plt.plot(error_periods, 10*np.log10(np.abs(error_fft)), label='Original')
+    error_fft = np.fft.rfft(averaged_error)
+    lin_error_fft = np.fft.rfft(lin_averaged_error)
+    error_frequencies = np.fft.rfftfreq(len(averaged_error), commanded_positions[1] - commanded_positions[0])
+    error_periods = 1 / error_frequencies
+    plt.figure()
+    plt.plot(error_periods, 10*np.log10(np.abs(error_fft)), label='Original')
     # plt.plot(error_periods, 10*np.log10(np.abs(lin_error_fft)), label='Linear Correction')
-    # plt.semilogx()
-    # plt.grid()
-    # plt.title("Periodic Spacial Error")
-    # plt.ylabel('Error (dB)')
-    # plt.xlabel('Error Period (emitter widths)')
-    # plt.legend()
+    plt.semilogx()
+    plt.grid()
+    plt.title("Periodic Spacial Error")
+    plt.ylabel('Error (dB)')
+    plt.xlabel('Error Period (emitter widths)')
+    plt.legend()
 
     plt.show()
 
