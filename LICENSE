@@ -1,0 +1,11 @@
+This project uses two licenses.
+
+Hardware (hardware/, mechanical/): CERN-OHL-P-2.0, see LICENSE-CERN-OHL-P
+Firmware and software (firmware/, tests/): MIT, see LICENSE-MIT
+
+Exceptions:
+- firmware/src/cube-mx-autogen/* are
+  © STMicroelectronics under their own license terms.
+- hardware/sensor-pcb/libraries/JR200/ is covered by its own License.txt.
+
+Copyright (c) 2026 Nick Steele
