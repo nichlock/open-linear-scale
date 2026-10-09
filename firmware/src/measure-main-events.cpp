@@ -78,6 +78,7 @@ enum SampleOutputTypes : uint8_t {
   OUTPUT_POSITION = 0,    // not implemented
   OUTPUT_DBG_BURST_RAW,   // Take no differences
   OUTPUT_DBG_BURST_DIFF,  // Take the diff and cancel out opposite emitters
+  OUTPUT_DBG_NONE,        // Run sensor without outputting for electrical measurements
 };
 
 enum StateMachine : uint8_t {
@@ -110,9 +111,9 @@ const uint8_t P_WR = 0x4;
   X(SENSOR_STATE                 , STATE_START_CONTINUOUS                , P_RD | P_WP | P_WR) \
   X(CONVERSION_FACTOR            , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
-  X(SENSOR_INPUT                 , INPUT_FILTER                      , P_RD | P_WP) \
-  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_DIFF                  , P_RD | P_WP) \
-  X(SENSOR_ALGORITHM             , ALGO_SLIDING_WINDOW                 , P_RD | P_WP) \
+  X(SENSOR_INPUT                 , INPUT_FILTER                          , P_RD | P_WP) \
+  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_DIFF                 , P_RD | P_WP) \
+  X(SENSOR_ALGORITHM             , ALGO_SLIDING_WINDOW                   , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
   X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
   X(CONVERSION_WINDOW            , LL_ADC_SAMPLINGTIME_12CYCLES_5        , P_RD | P_WP) \
