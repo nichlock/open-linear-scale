@@ -200,15 +200,15 @@ def main():
     # # ax[0].legend()
     # plt.suptitle('PSD')
 
-    # _, ax = plt.subplots(8)
-    # for tr in range(8):
-    #     freqs = np.fft.rfftfreq(len(samples[:, tr]), sample_period)
-    #     fft = np.fft.rfft(samples[:, tr])
-    #     ax[tr].plot(freqs[1:], 10*np.log10(np.abs(fft[1:])), alpha=0.5, label='FFT')
-    #     ax[tr].set_ylabel('Magnitude (dB)')
+    _, ax = plt.subplots(8)
+    for tr in range(8):
+        freqs = np.fft.rfftfreq(len(samples[:, tr]), sample_period)
+        fft = np.fft.rfft(samples[:, tr])
+        ax[tr].plot(freqs[1:], 10*np.log10(np.abs(fft[1:])), alpha=0.5, label='FFT')
+        ax[tr].set_ylabel('Magnitude (dB)')
 
-    # ax[0].set_xlabel('Frequency (Hz)')
-    # plt.suptitle('FFT')
+    ax[0].set_xlabel('Frequency (Hz)')
+    plt.suptitle('FFT')
 
 
 if __name__ == "__main__":

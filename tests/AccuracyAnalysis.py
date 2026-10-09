@@ -14,6 +14,9 @@ import os
 
 ALLOW_PKL = False
 
+# DIRECTORY = './data/acc-4l-revb'
+# MITUTOYO_DIRECTORY = './data/acc-4l-revb_mitutoyo'
+
 DIRECTORY = './data/accuracy-4layer'
 MITUTOYO_DIRECTORY = './data/accuracy-4layer_mitutoyo'
 
@@ -239,6 +242,17 @@ def focusPlotSingleEstimate(estimate_positions, raw_samples, focal_index):
     # ax[1].x_label.set_text('frequencies')
 
 
+def waterfallFft(estimate_positions):
+    fft_freq = np.fft.rfftfreq(len(estimate_positions[0, :]), d=1e-3)
+    ffts = np.fft.rfft(estimate_positions, axis=-1)
+
+    plt.figure()
+    plt.imshow(10 * np.log10(np.abs(ffts[:, 1:])), aspect='auto', interpolation='none', extent=[fft_freq[0], fft_freq[-1], 0, len(ffts)])
+    plt.title('Waterfall FFT of Position')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('Sample Number')
+
+
 def plotRawAgainstPos(commanded_positions, estimate_positions, raw_samples):
     _, ax = plt.subplots(2, sharex=True)
     for pos in range(len(commanded_positions)):
@@ -461,12 +475,12 @@ def main():
 
     # plotWrappedEstimates(4 - estimate_positions.copy(), commanded_positions.copy())
     # plotWrappedEstimatesNoScatter(estimate_positions.copy(), commanded_positions.copy())
+    # focusPlotSingleEstimate(estimate_positions.copy(),
+    #                         raw_samples.copy(),
+    #                         57)
     focusPlotSingleEstimate(estimate_positions.copy(),
                             raw_samples.copy(),
-                            1)
-    focusPlotSingleEstimate(estimate_positions.copy(),
-                            raw_samples.copy(),
-                            2)
+                            58)
     # focusPlotSingleEstimate(estimate_positions.copy(),
     #                         raw_samples.copy(),
     #                         3)
@@ -478,6 +492,11 @@ def main():
     #                         1000)
 
     unwrapped = unwrapEstimates(NUM_EMITTERS - estimate_positions)
+
+    focusPlotSingleEstimate(unwrapped.copy(),
+                            raw_samples.copy(),
+                            58)
+    waterfallFft(unwrapped.copy())
 
     unwrapped *= EMITTERS_TO_MM
     commanded_positions = -(commanded_positions-commanded_positions[0])
