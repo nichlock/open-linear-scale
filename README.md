@@ -11,17 +11,17 @@ TODO: photo goes here
 | Accuracy     | 40µm (1.6 thou)* |
 | Output Type  | UART (todo SSI)  |
 
-*Assuming static room temperature. This is a little conservative for the electrical precision and resolution. For a deep dive on the real measurement error, see [Practical Accuracy Measurements](#practical-accuracy-measurements)
+*Assuming static room temperature. This is a little conservative for the electrical precision and resolution. For a summary of the real measurement error, see [Practical Accuracy Measurements](#practical-accuracy-measurements).
 
 ## Quickstart
 
-1. Order the 4-layer sensor and the reflector.
+1. Order the 4-layer sensor and the reflector ([hardware](hardware/README.md)).
 2. Assemble.
-3. Flash the firmware.
+3. Flash the [firmware](firmware/README.md#building-and-flashing).
 4. Apply Kapton for the [0.1mm gap](#mechanical-integration).
-5. Set the trimmer.
-6. Run `LiveView.py`.
-7. 
+5. Set the [trimmer](hardware/README.md#trimmer).
+6. Run `LiveView.py` ([tests](tests/README.md)).
+
 ## Why make this
 
 This sensor is the outcome of a personal project I've had for a while. I started by simply reverse-engineering digital capacitive calipers, and I wanted to publish a functional capacitive encoder since I had trouble finding much information on them publicly available.
@@ -78,47 +78,16 @@ When I set out on this project, I hoped for a noise floor of 1µm and an electri
 
 I measured the error with a Mitutoyo 543-793B-12 digital indicator. More details are in the [mechanical readme](mechanical/README.md).
 
-I moved the sensor by a total of 9mm in steps of 0.1mm using my 3D printer. The stepsize was not perfect, but it's not a part of the analysis because the indicator tells me a true position of my sensor. I then processed the measurements using a median filter (see the noise section for more information).
+I moved the sensor by a total of 9mm in steps of 0.1mm using my 3D printer. The stepsize was not perfect, but it's not a part of the analysis because the indicator tells me a true position of my sensor. I then processed the measurements using a 3-step median filter.
 
 ![Four Layer Sensor Error](docs/4-layer-sensor-error-median-filtered.png)
 
-There are two parts to the error. The noise, which is shown in blue, and the averaged error, in black. I consider these in detail in the next sections.
+There are two parts to the error. The noise, which is shown in blue, and the averaged error, in black.
 
-## Averaged Error
+- The averaged error is dominated by a periodic error that correlates with position (the large triangular deviations around 1~3 and 7~9mm), a smaller error that repeats every emitter (0.635mm), and drift that is most likely from my 3D printed test assembly.
+- The noise is smaller than the averaged error. It is mostly white noise, plus a low-frequency resonance of my 3D printer and occasional jumps caused by asymmetric emitter "strengths".
 
-The averaged error has a very long 2-second window, so I'm taking it to be the physical measurement error.
-
-There's a few sources here:
-- The largest source is a periodic error that seems to correlate to the position. These are the two large triangular deviations around 1~3 and 7~9mm. It might be possible to calibrate this out, but I haven't tried that yet.
-- Another source of error is a smaller triangular-looking error per each emitter. This is periodic over one emitter of 0.635mm.
-- Finally, a major source of error here is the general drift. From 0~2mm, I think there is a drift of about 20µm. It's hard to say how large this is, but since it's not periodic, it's probably caused by my 3D printed assembly, with little in the way of proper constraints, bending out of shape.
-
-## Noise
-
-The noise is smaller than the averaged error. I plotted the standard deviation and peak observed error.
-
-![Four Layer Sensor Noise](docs/4-layer-sensor-noise-median-filtered.png)
-
-Below is a PSD of the noise frequencies.
-
-![Four Layer Sensor Noise PSD](docs/4-layer-noise-welch.png)
-
-
-The noise also has a few sources.
-
-- Most of the noise is white noise. This can be seen in FFTs of the measurements.
-- There is one clear frequency where noise is persistent at around 10~14Hz and the next 3 harmonics (on the PSD these are the peaks at the beginning). Sometimes the frequency varies depending on my setup. This low-frequency "noise" is being caused by real physical resonance of my 3D printer's relative z-height by a few µm. I'm working on a better mechanical setup that should help with this. For conservatism, I don't erase it from my analysis here.
-- There is a big spike in the middle of the graph. In short this is caused by asymmetric emitter "strengths". When the algorithm jumps from a linearly interpolating using one emitter over another, there is a small change in the output because those emitters don't necessarily predict an identical value. This particular position happened consistently jump between two emitters. I believe this can be helped through calibration, but I haven't looked into that yet.
-
-All of these can be helped by averaging and filtering. I only present data here after performing a 3-step median filter. An example of completely unfiltered noise is in [this picture](docs/4-layer-sensor-noise-raw.png). I'm keeping the median filter for my analysis because I do think it makes physical sense to keep it long-term.
-
-A final note is on the effect of averaging on this noise. Below is an Allan Deviation.
-
-![Four Layer Sensor Noise Allan Deviation](docs/allan-deviation-median-filter.png)
-
-## Error Disposition
-
-I chose to report a rough conservative number for the accuracy. I got the number visually from the plots. I did that because there is too much uncertainty in my mechanical setup and algorithms for me to feel comfortable listing exact numbers on what I measured.
+I chose to report a rough conservative number for the accuracy, read visually from the plots, because there is too much uncertainty in my mechanical setup and algorithms to list exact numbers. The full analysis, including noise PSDs and an Allan deviation, is in the [tests README](tests/README.md#accuracy-analysis).
 
 # Functional Description
 
@@ -158,13 +127,7 @@ The sensing hardware operates on a 16kHz signal. There are 16 pulses that it run
 
 The integrator output always looks something like the shown image, but as the position varies, it will look like it is phase-shifted compared to the zero position.
 
-There are a few "samples" in this measurement strategy. For consistency, I came up with specific definitions for this project:
-
-1. **Conversion**: ADC individual sample/convert cycle (one pulse in the ADC row in the plot above).
-2. **Oversample**: The value once the ADC's hardware oversample completes (one full state in the plot above).
-3. **Sequence**:   The overall sequence running at 1kHz (the entire time plot above).
-
-There is also the **Transient**: This is not a sample, but a term I use to refer to the change in the emitter states and the change induced on the receiving antenna. When used in the algorithms, it represents measurement after the [cancellations](#combined-symmetric-measurements) are performed.
+I use the term **transient** for the change in the emitter states and the change it induces on the receiving antenna. When used in the algorithms, it represents the measurement after the [cancellations](#combined-symmetric-measurements) are performed. The firmware uses a few more specific terms for its samples, which are defined in the [firmware README](firmware/README.md#sample-naming).
 
 # The Position Algorithm
 
@@ -244,7 +207,7 @@ There are a few symmetries that I take advantage of in the sensor and signals.
 
 We have 8 emitters that we pulse high and low. The second half of the emitters is always the inverse of the first half.
 
-In the code, the emitter states are defined by `emitter_states`. These are states in time, but what we measure is based on the difference between one state and the next.
+The emitter states are states in time, but what we measure is based on the difference between one state and the next. The [firmware README](firmware/README.md#emitter-states-and-lanes) shows how this maps to the code.
 
 ![Emitter State Transitions](docs/plots/emitter-state-transitions-diagonal.png)
 
@@ -262,41 +225,11 @@ Finally, from each transient in each lane, we can get a position estimate as des
 
 We receive a voltage pulse on the receiving antenna. The height of the pulse depends on the capacitive coupling, and the length of time that the pulse lasts depends on the resistive leakage.
 
-Below is a schematic of the input circuitry. I explain the rationale in the subsequent sections.
-
 ![RX Input Chain Schematic](docs/schematics/rx-chain.png)
 
-## ADC-Only Samples
+Sampling that pulse directly with the ADC works for low accuracy, but it needs very short sample windows and can't be anti-alias filtered well, so it is vulnerable to noise. Instead, the RX antenna feeds a **charge integrator**, whose gain is set by the ratio of its two capacitors (one is a trimmer for adjustable gain). The integrator turns the short pulse into a held step, which lets the ADC oversample over a long window for better SNR. An **anti-alias filter** after the integrator handles the above-Nyquist electrical noise that the integrator passes through. The firmware measures the change from one integrator state to the next, so the integrator never needs to be reset.
 
-One way to measure the RX input is to put it directly in to an ADC. At first, this was all I did.
-
-This method works well enough for low-accuracy. There are two problems:
-1. The ADC needs to use very small sample windows, making it vulnerable to noise.
-2. The signal can't be conditioned easily. The shape of the pulse is also not conducive to anti-alias filtering. As a consequence, I was getting massive problems with above-nyquist electrical noise while testing near my 3D printer.
-
-## Charge Integrator
-
-A major improvement to this design was the charge integrator. This allows us to widen the ADC window all the way to a zeroth order hold.
-
-The charge integrator creates a gain that is the ratio of the two capacitors. I used a trimmer capacitor for adjustable gain.
-
-Another major benefit is that we can now oversample the ADC over a long window of time. That alone gives a better SNR.
-
-Although this did improve the SNR against white noise, it doesn't solve the entire anti-aliasing problem. Most noise still goes right through the charge integrator. My 3D printer's major noise component comes in 23kHz, compared to a sample window of 16kHz (this was before I added any shielding). So an anti-alias filter is added on. The filter slews the signal significantly, but it results in a much better SNR in the presence of above-nyquist electrical noise.
-
-The integrator is leaky (100MΩ resistor) in order to prevent DC drifting.
-
-The firmware measures the difference between one integrator state and the next, not the magnitude of one pulse against vref. That means we don't have to worry about resetting the integrator.
-
-## VREF
-
-Vref is chosen at 50% VDDA, or 1.65V. It's generated by a DAC. There could be benefits to tuning VREF live since there seems to be asymmetry in the I/O leakage, pulling the average DC value away from 50% VCC. That would give more budget for a higher input gain. This isn't a major contributor to accuracy issues so I don't do it right now.
-
-## Trimmer
-
-The easiest way to set the trimmer is to twist it while monitoring the integrator output on an oscilloscope. I also do it by using the LiveView test script, but that can be a little cumbersome due to delays in the plotting. I'm working on a cleaner way of doing this using less data over UART or even by using the onboard LED.
-
-The trimmer I specified only goes down to 4.5pF. It gained the capacitive pulse up to 1Vpp. I would like a higher magnitude to help reduce the impact of the white noise at the ADC input, although that is scope for future work.
+The design rationale, VREF and the trimmer setup are covered in more detail in the [hardware README](hardware/README.md#analog-frontend).
 
 # Mechanical Integration
 
@@ -312,16 +245,8 @@ I tried 3D printing a shim for this, but I found that a much easier and more acc
 
 TODO: photo of kapton'd sensor board
 
-A typical mechanical stackup is shown below. See the mechanical folder's README for more details.
+A typical mechanical stackup, and the test fixtures, are covered in the [mechanical README](mechanical/README.md).
 
-| Color      | Purpose                                                                         |
-| ---------- | ------------------------------------------------------------------------------- |
-| Red        | Mounting baseplate.                                                             |
-| (Multiple) | Sensor PCB.                                                                     |
-| Cyan       | Shim between PCB bottom and slider housing.                                     |
-| (Multiple) | Reflector PCB.                                                                  |
-| Green      | Slider housing which restrains the sensor PCB.                                  |
-| Blue       | Reflector mount (takes the place of mounting the reflector to a rigid machine). |
+# License
 
-
-![Mechanical Stackup](docs/mechanical-stackup.PNG)
+TODO: hardware (`hardware/`, `mechanical/`) under CERN-OHL-P-2.0, firmware and software (`firmware/`, `tests/`) under MIT. Files generated by STM32CubeMX keep STMicroelectronics' license.
