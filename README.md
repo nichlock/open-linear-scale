@@ -4,13 +4,14 @@ TODO: photo goes here
 
 ## Key Details
 
-| Parameter    | Value                               |
-| ------------ | ----------------------------------- |
-| Encoder Type | Incremental                         |
-| Method       | Capacitive                          |
-| Resolution   | <2µm (TODO get final numbers here)* |
-| Accuracy     | (todo)*                             |
-| Output Type  | UART (todo SSI)                     |
+| Parameter    | Value            |
+| ------------ | ---------------- |
+| Encoder Type | Incremental      |
+| Method       | Capacitive       |
+| Accuracy     | 40µm (1.6 thou)* |
+| Output Type  | UART (todo SSI)  |
+
+*Assuming static room temperature. This is a little conservative for the electrical precision and resolution. For a deep dive on the real measurement error, see [Practical Accuracy Measurements](LINK TODO)
 
 ## What's Included
 
@@ -22,7 +23,49 @@ TODO: photo goes here
 
 # Practical Accuracy Measurements
 
-TODO
+I measured the error with a Mitutoyo 543-793B-12 digital indicator. More details are in the mechanical readme (TODO link).
+
+I moved the sensor by a total of 9mm in steps of 0.1mm using my 3D printer. The stepsize was not perfect, but it's not a part of the analysis because the indicator tells me a true position of my sensor. I then processed the measurements using a median filter (see the noise section for more information).
+
+![Four Layer Sensor Error](docs/4-layer-sensor-error-median-filtered.png)
+
+There are two parts to the error. The noise, which is shown in blue, and the averaged error, in black.
+
+## Averaged Error
+
+The averaged error has a very long 2-second window, so I'm taking it to be the physical measurement error.
+
+There's a few sources here:
+- The largest source is a periodic error that seems to correlate to the posistion. These are the two large triangular deviations around 1~3 and 7~9mm. It might be possible to calibrate this out, but I haven't tried that yet.
+- Another source of error is a smaller triangular-looking error per each emitter. This is periodic over one emitter of 0.635mm.
+- Finally, a major source of error here is the general drift. From 0~2mm, I think there is a drift of about 20µm. It's hard to say how large this is, but since it's not periodic, it's probably caused by my 3D printed assembly, with little in the way of proper constraints, bending out of shape.
+
+## Noise
+
+The noise is smaller than the averaged error, which is good. I plotted the standard deviation and peak observed error.
+
+![Four Layer Sensor Noise](docs/4-layer-sensor-noise-median-filtered.png)
+
+Below is a PSD of the noise frequencies.
+
+![Four Layer Sensor Noise PSD](docs/4-layer-noise-welch.png)
+
+
+The noise also has a few sources.
+
+- Most of the noise is white noise. This can be seen in FFTs of the measurements.
+- There is one clear frequency where noise is persistent at around 10~14Hz and the next 3 harmonics (on the PSD these are the peaks at the beginning). Sometimes the frequency varies depending on my setup. This low-frequency "noise" is being caused by real physical resonance of my 3D printer's relative z-height by a few µm. I'm working on a better mechanical setup that should help with this. For conservatism, I don't erase it from my analsyis here.
+- There is a big spike in the middle of the graph. In short this is caused by assymetric emitter "strengths". When the algorithm jumps from a linearly interpolating using one emitter over another, there is a small change in the output because those emitters don't necesarily predict an identical value. This particular position happened consistnatly jump between two emitters. I believe this can be helped through calibration, but I haven't looked into that yet.
+
+All of these can be helped by averaging and filtering. I only present data here after performing a median filter. An example of completely unfiltered noise is in [this picture](docs/4-layer-sensor-noise-raw.png). I'm keeping the median filter for my analysis because I do think it makes physical sense to keep it long-term.
+
+A final note is on the effect of averaging on this noise. Below is an Allan Deviation.
+
+![Four Layer Sensor Noise PSD](docs/allan-deviation-median-filter.png)
+
+## Error Disposition
+
+I chose to report a conservative number for the precision and resolution. I did that because there is too much uncertainty in my mechancial setup and algorithms for me to feel comfortable listing exact numbers on what I measured.
 
 # Functional Description and Design Details
 
@@ -32,11 +75,11 @@ There are two key pieces of the encoder: The sensor and the reflector.
 
 TODO: annotated picture of top and bottom
 
-The sensor has an STM32L4, a microcontroller with lots of useful analog peripherals.
+The sensor has an STM32L4, a microcontroller with lots of built-in analog peripherals.
 
 The sensor has a sensing grid. In the grid is a repeating pattern of 8 seperate TX antennas, called emitters.
 
-The sensor also has an RX antenna. The RX antenna feeds into a charge integrator and a filter.
+The sensor also has an RX antenna. The RX antenna feeds into a charge integrator and anti-aliasing filter.
 
 TODO: circuit diagram
 
@@ -135,62 +178,3 @@ A major improvement to this design was the charge integrator. This allows us to 
 The charge integrator creates a gain that is the ratio of the two capacitors. I used a trimmer capacitor for adjustable gain.
 
 This doesn't solve anti-aliasing alone, so an anti-alias filter is added on. The filter slews the signal significantly, but this still results in a better SNR in the presence of my 3D printer's 23kHz noise.
-
-## Analysis
-
-It is ideal to choose a noise floor and derive the required SNR to achieve that noise.
-
-For this design, I wanted a challenge. I chose an ambitious target accuracy of 1µm. That is ideally the noise floor before filtering. I don't necessarily have to achieve it. 
-
-### Mathematical Definitions
-
-**Knowns**
-
-| Variable | Value        | Unit type | Description                                    |
-| -------- | ------------ | --------- | ---------------------------------------------- |
-| $A$      | 1µm=0.04mil  | Length    | Target Noise Floor                             |
-| $s$      | 25mil        | Length    | Emitter period.                                |
-| $C_i$    | 12-bit value | Counts    | The four transient conversions.                |
-| $C_e$    | ideally low  | Counts    | Noise seen by the ADC measurements, in counts. |
-
-**Unkowns**
-
-| Variable  | Unit type | Description                                                                  |
-| --------- | --------- | ---------------------------------------------------------------------------- |
-| $V_m$     | Volts     | Voltage pulse magnitude produced by shifting the scale by one emitter width. |
-| $C_m$     | Counts    | $V_m$ converted to ADC counts.                                               |
-| $C_{MAX}$ | Counts    | The maximum pulse magnitude on the RX pad (four emitters perfectly aligned). |
-
-I define the transient conversions as:
-
-$C_i=V_m\times |x-i|$
-
-Where $i=[0...3]$
-
-We use a zero-crossing to determine a position estimate.
-
-$\hat{P}=\frac{C_{i}}{(C_i-C_{i+1})}$
-
-I compared the error visually and found a worst-case error:
-
-$P_e=\frac{C_e}{C_m}$
-
-The target voltage magnitude when using zero-crossing is:
-
-$C_m=\frac{C_e}{\left(\frac{A}{s}\right)}$
-
-or: 
-
-$s = \frac{A\:\times \:C_m}{C_e}$
-
-
-Here are some example values for 1µm. For example, if you have 5 ADC counts worth of noise, you need each emitter pulse to contribute 3125 ADC counts.
-
-| $C_e$ | $C_m$ |
-| ----- | ----- |
-| 1     | 625   |
-| 3     | 1875  |
-| 5     | 3125  |
-| 10    | 6250  |
-
-For a standard deviation of 1µm, you would need to target an SNR of ~34 dB. For a 3.3V supply that's equivalent to 1.3mV.
