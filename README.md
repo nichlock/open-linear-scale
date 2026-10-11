@@ -75,6 +75,8 @@ When I started, I hoped for a 1µm noise floor and 10µm electrical accuracy. I'
 - Improvements to the layout and mechanical design.
 - Absolute position sensing.
 
+I'd welcome help with these! Especially the mechanical design, which is far outside my expertise. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get involved.
+
 # Practical Accuracy Measurements
 
 I measured the error against a Mitutoyo 543-793B-12 digital indicator. The [mechanical README](mechanical/README.md) has more detail on the setup.
@@ -233,17 +235,17 @@ The [hardware README](hardware/README.md#analog-frontend) covers the design rati
 
 # Mechanical Integration
 
-TODO: Photo of design
+![Prusa Calibration Assembly](docs/mechanical/cal-prusa-assembled.jpg)
 
 The sensor and reflector PCBs are both aligned with 3mm pins and mounted with M3 fasteners.
 
-The sensor and reflector need a gap between them. I aim for 0.1mm. Without it, the signal is larger, but [physical nonlinearities](#non-zero-spacing) cancel out any SNR benefit.
+The sensor and reflector need a gap between them. I aim for 0.1mm. Without it, the signal is larger, but [physical nonlinearities](#non-zero-spacing) wipe out any SNR benefit.
 
-I haven't measured how sensitive the sensor is to the gap, sideways offset or tilt. The effect doesn't seem large, and in theory the design should tolerate all three reasonably well.
+I haven't measured how sensitive the sensor is to a gap, sideways offset or tilt. The effect doesn't seem large, and in theory the design should tolerate all three reasonably well.
 
 I tried a 3D printed shim to set the gap, but two layers of Kapton tape turned out to be much easier and more accurate.
 
-TODO: photo of kapton'd sensor board
+![Sensor PCB With Kapton Shim](mechanical/calibration-prusa/assembly-photos/2-cal-prusa-pcb-with-kapton.jpg)
 
 The [mechanical README](mechanical/README.md) covers a typical mechanical stackup and the test fixtures.
 
