@@ -6,7 +6,7 @@ from pathlib import Path
 
 import serial
 
-READER_SCRIPT = Path(__file__).parent / "ImpuleReader.py"
+READER_SCRIPT = Path(__file__).parent / "ImpulseReader.py"
 
 ABS_Z_MIN = 145
 ABS_Z_MAX = 160

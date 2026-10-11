@@ -9,6 +9,7 @@ from tqdm import tqdm
 from scipy.stats import norm
 
 from scipy import signal as sig
+from scipy import ndimage
 
 import os
 
@@ -167,64 +168,19 @@ def plotWrappedEstimatesNoScatter(estimate_positions, commanded_positions):
 
 
 def focusPlotSingleEstimate(estimate_positions, raw_samples, focal_index):
-    _, ax = plt.subplots(3, sharex=True)
+    _, ax = plt.subplots(4, sharex=True)
     for tr in range(4):
         ax[0].plot(raw_samples[focal_index, :, tr], marker='o')
     ax[0].title.set_text('phase 0')
     for tr in range(4):
         ax[1].plot(raw_samples[focal_index, :, tr + 4], marker='o')
     ax[1].title.set_text('phase 1')
-    ax[2].plot(estimate_positions[focal_index, :], marker='o')
-    ax[2].title.set_text('Position Estimate')
+    for tr in range(8):
+        ax[2].plot(raw_samples[focal_index, :, tr] - np.mean(raw_samples[focal_index, :, tr]), marker='o')
+    ax[2].title.set_text('errors in both phases')
+    ax[3].plot(estimate_positions[focal_index, :], marker='o')
+    ax[3].title.set_text('Position Estimate')
     [a.grid(True) for a in ax]
-
-    # _, ax = plt.subplots(2, sharex=True)
-    # ax[0].plot(np.arange(4), raw_samples[focal_index, time_step, :4], marker='o')
-    # ax[0].plot([4], -raw_samples[focal_index, time_step, 0], marker='o')
-    # ax[0].title.set_text('phase 0')
-    # ax[1].plot(np.arange(4), raw_samples[focal_index, time_step, 4:], marker='o')
-    # ax[1].plot([4], -raw_samples[focal_index, time_step, 4], marker='o')
-    # ax[1].title.set_text('phase 1')
-    # [a.grid(True) for a in ax]
-
-    # N = len(estimate_positions[focal_index, :])
-
-    # sos = sig.bessel(6, 0.1, output='sos')
-    # w_plot, h_plot = sig.freqz_sos(sos)
-    # wgd_plot, group_delay = sig.group_delay(sig.sos2tf(sos))
-    # filtered_estimates = sig.sosfilt(sos, np.repeat(estimate_positions[focal_index, :], 3))
-    # filtered_estimates = filtered_estimates[N:2*N]
-    # ma_n = N//2
-    # moving_avg = np.ones(ma_n) / (ma_n)
-    # # filtered_error = filtered_estimates - np.repeat(wrapped_real_positions[:, np.newaxis], filtered_estimates.shape[1], axis=-1)
-    # # plottable_filtered_error = (pos_error * EMITTERS_TO_MM)
-
-    # w_magv, h_magv = sig.freqz(moving_avg)
-    # w_gd_magv, group_delay_mavg = sig.group_delay((moving_avg, [1]))
-
-    # h_plot[np.abs(h_plot) < 1e-8] = np.nan
-    # h_magv[np.abs(h_magv) < 1e-8] = np.nan
-
-    # plt.figure()
-    # line1, = plt.plot(w_plot / np.pi, (10 * np.log10(np.abs(h_plot))))
-    # line2, = plt.plot(w_magv / np.pi, (10 * np.log10(np.abs(h_magv))))
-    # plt.ylabel('Magnitude (dB)')
-    # ax = plt.twinx()
-    # line3, = ax.plot(wgd_plot / np.pi, group_delay, '--')
-    # line4, = ax.plot(w_gd_magv / np.pi, group_delay_mavg, '--')
-    # # plt.set_text('Angle (rad)')
-    # plt.xlabel('w/nyq')
-    # plt.title('Filter')
-    # plt.legend([line1, line2, line3, line4], ['Butter Magnitude', 'Moving Average Magnitude', 'Butter Average Group Delay', 'Moving Average Group Delay'])
-
-    # plt.figure()
-    # plt.plot(estimate_positions[focal_index, :], marker='o', label='Input')
-    # plt.plot(filtered_estimates, marker='o', label='Butter')
-    # conv = np.convolve(np.repeat(estimate_positions[focal_index, :], 3), moving_avg)
-    # conv = conv[N:2*N]
-    # plt.plot(conv, marker='o', label='Moving Average')
-    # plt.title('Position Estimate and Filtering')
-    # plt.legend()
 
     fft_freq = np.fft.rfftfreq(len(estimate_positions[focal_index, :]), d=1e-3)
     fft_noise = np.fft.rfft(estimate_positions[focal_index, :])
@@ -237,9 +193,15 @@ def focusPlotSingleEstimate(estimate_positions, raw_samples, focal_index):
         tr_fft = np.fft.rfft(raw_samples[focal_index, :, tr])
         ax[1].plot(fft_freq, 10*np.log10(np.abs(tr_fft)), alpha=0.5)
     # plt.semilogx()
-    ax[1].title.set_text('Noise Frequencies')
-    # ax[1].y_label.set_text('Magnitude (dB)')
-    # ax[1].x_label.set_text('frequencies')
+    ax[1].title.set_text('FFT of Noise')
+
+    plt.figure()
+    welch_freq, welch_psd = sig.welch(estimate_positions[focal_index, :], fs=1e3, nperseg=512)
+    plt.semilogy(welch_freq, welch_psd)
+    plt.title('Welch PSD of Position Estimate')
+    plt.xlabel('Frequency (Hz)')
+    plt.ylabel('PSD (emitter widths²/Hz)')
+    plt.grid(True, which='both', alpha=0.3)
 
 
 def waterfallFft(estimate_positions):
@@ -251,6 +213,54 @@ def waterfallFft(estimate_positions):
     plt.title('Waterfall FFT of Position')
     plt.xlabel('Frequency (Hz)')
     plt.ylabel('Sample Number')
+
+
+def allanDeviation(estimate_positions, sample_period, label='overlapping ADEV', ax=None, title=None):
+    '''
+    estimate_positions: unwrapped estimates in emitter widths, shape [test, sample]
+    sample_period: seconds between samples
+    label: legend label for this ADEV trace
+    ax: existing axes to add this trace to. If None, a new figure is created
+        along with the white noise reference line.
+    title: plot title. Defaults to 'Allan Deviation' on a new figure.
+
+    Returns the axes that were plotted on.
+    '''
+    import allantools
+    rate = 1 / sample_period
+    positions_um = estimate_positions * EMITTERS_TO_MM * 1e3
+
+    L = positions_um.shape[-1]
+    # ~50 log-spaced window sizes from 1 sample to L/4, converted to seconds
+    taus = np.unique(np.logspace(0, np.log10(L // 4), 500).astype(int)) * sample_period
+
+    avars = []
+    for row in positions_um:
+        tau_out, adev, adev_err, n = allantools.oadev(row, rate=rate, data_type='freq', taus=taus)
+        avars.append(adev**2)
+    # Average the variances across rows, then take the square root
+    adev = np.sqrt(np.mean(avars, axis=0))
+
+    tau_ms = tau_out * 1e3
+    new_axes = ax is None
+    if new_axes:
+        _, ax = plt.subplots()
+
+    ax.loglog(tau_ms, adev, 'o-', label=label)
+
+    if new_axes:
+        ax.loglog(tau_ms, adev[0] * np.sqrt(tau_ms[0] / tau_ms), 'k--', label=r'$\tau^{-1/2}$ (white noise)')
+        ax.grid(True, which='both', axis='both', alpha=0.3)
+        ax.set_xlabel('Averaging time τ (ms)')
+        ax.set_ylabel('Allan deviation (µm)')
+        if title is None:
+            title = 'Allan Deviation'
+
+    if title is not None:
+        ax.set_title(title)
+    ax.legend()
+
+    return ax
 
 
 def plotRawAgainstPos(commanded_positions, estimate_positions, raw_samples):
@@ -395,6 +405,17 @@ def unwrapEstimates(estimate_positions):
     return unwrapped - unwrapped[0, 0]
 
 
+def medianFilter(estimate_positions, kernel_size):
+    '''
+    Apply a running median of kernel_size samples along the time axis of each test.
+
+    Tests are filtered independently, and edges are padded by repeating the end
+    samples so that they are not pulled toward zero. Expects unwrapped estimates,
+    since a median across a 4->0 wrap would be meaningless.
+    '''
+    return ndimage.median_filter(estimate_positions, size=(1, kernel_size), mode='nearest')
+
+
 def loadMitutoyoData(directory=MITUTOYO_DIRECTORY):
     '''
     Load the Mitutoyo gauge readings captured alongside each sensor sample set.
@@ -478,12 +499,12 @@ def main():
     # focusPlotSingleEstimate(estimate_positions.copy(),
     #                         raw_samples.copy(),
     #                         57)
-    focusPlotSingleEstimate(estimate_positions.copy(),
-                            raw_samples.copy(),
-                            58)
     # focusPlotSingleEstimate(estimate_positions.copy(),
     #                         raw_samples.copy(),
-    #                         3)
+    #                         58)
+    focusPlotSingleEstimate(estimate_positions.copy(),
+                            raw_samples.copy(),
+                            3)
     # focusPlotSingleEstimate(estimate_positions.copy(),
     #                         raw_samples.copy(),
     #                         600)
@@ -493,10 +514,27 @@ def main():
 
     unwrapped = unwrapEstimates(NUM_EMITTERS - estimate_positions)
 
+    focusPlotSingleEstimate(estimate_positions.copy(),
+                            raw_samples.copy(),
+                            33)
     focusPlotSingleEstimate(unwrapped.copy(),
                             raw_samples.copy(),
-                            58)
+                            33)
     waterfallFft(unwrapped.copy())
+    adev_ax = allanDeviation(unwrapped.copy(), sample_period, label='Raw',
+                             title='Allan Deviation: Median Filter Comparison')
+
+    # unwrapped = medianFilter(unwrapped, 3)
+
+    # median filter on a wrapped-position is not valid, it's only done here for plotting.
+    # estimate_positions = medianFilter(estimate_positions, 3)
+
+    focusPlotSingleEstimate(unwrapped.copy(),
+                            raw_samples.copy(),
+                            33)
+    waterfallFft(unwrapped.copy())
+
+    allanDeviation(unwrapped.copy(), sample_period, label='Median filter (3)', ax=adev_ax)
 
     unwrapped *= EMITTERS_TO_MM
     commanded_positions = -(commanded_positions-commanded_positions[0])
@@ -523,22 +561,34 @@ def main():
     # sin_averaged_error = np.mean(sin_unwrapped, axis=-1) - gauge_measured
 
     plt.figure()
-    plt.plot(gauge_measured, averaged_error, label='Error')
-    # plt.plot(gauge_measured, lin_averaged_error, label='Linear Correction')
-    # plt.plot(gauge_measured, np.mean(l_corr, axis=-1), '--', color='C1', label='Linear Factor')
     extended_real_positions = np.repeat(gauge_measured[:, np.newaxis], unwrapped.shape[-1], axis=-1)
-    flattened_error = np.array((unwrapped - extended_real_positions).flat)
-    plt.scatter(extended_real_positions-extended_real_positions[0], flattened_error, label='Flat error', alpha=0.01)
+    error = unwrapped - extended_real_positions
+    flattened_error = np.array((error).flat)
+    extended_real_positions -= extended_real_positions[0]
+    plt.scatter(extended_real_positions, flattened_error, label='Error and Noise', alpha=0.01)
+    plt.plot(gauge_measured, averaged_error, 'k', label='2-Second Averaged Error')
     plt.title('Error to Measured')
     plt.ylabel('Error (mm)')
     plt.xlabel('Offset (mm)')
-    plt.twinx()
-    # plt.plot(gauge_measured, np.mean(estimate_positions, axis=-1), label='Emitter Position')
-    for tr in range(8):
-        plt.plot(gauge_measured, np.mean(raw_samples, axis=1)[:, [tr]], label=f'TR{tr}')
-    plt.ylabel('Emitter Position')
+    plt.grid()
+    legend = plt.legend()
+    # The scatter's alpha=0.01 would make its legend marker invisible
+    for handle in legend.legend_handles:
+        handle.set_alpha(1)
+    plt.tight_layout()
 
+    plt.figure()
+    std_error = np.std(error, axis=-1)
+    max_error = np.max(np.abs(error - averaged_error[:, np.newaxis]), axis=-1)
+    plt.plot(gauge_measured, std_error, label='Standard Deviation of Noise (Right)')
+    plt.plot(gauge_measured, max_error, label='Maximum Noise (Right)')
+    plt.title('Measurement Noise')
+    plt.ylabel('Noise (mm)')
+    plt.xlabel('Offset (mm)')
+    plt.grid()
     plt.legend()
+
+    plt.tight_layout()
 
     # plt.figure()
     # plt.plot(np.mean(unwrapped, axis=-1), averaged_error)

@@ -106,7 +106,7 @@ def main():
                 raise ValueError("no samples received")
 
         data = {
-            "sample_period": ticks / frequency_hz / len(samples),
+            "sample_period": ticks / frequency_hz,
             "samples": samples,
         }
         with open(output, "w") as f:
