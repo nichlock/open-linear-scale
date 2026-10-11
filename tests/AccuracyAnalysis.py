@@ -18,11 +18,11 @@ ALLOW_PKL = False
 # DIRECTORY = './data/acc-4l-revb'
 # MITUTOYO_DIRECTORY = './data/acc-4l-revb_mitutoyo'
 
-DIRECTORY = './data/accuracy-4layer'
-MITUTOYO_DIRECTORY = './data/accuracy-4layer_mitutoyo'
+# DIRECTORY = './data/accuracy-4layer'
+# MITUTOYO_DIRECTORY = './data/accuracy-4layer_mitutoyo'
 
-# DIRECTORY = './data/accuracy'
-# MITUTOYO_DIRECTORY = './data/accuracy_mitutoyo'
+DIRECTORY = './data/accuracy'
+MITUTOYO_DIRECTORY = './data/accuracy_mitutoyo'
 
 NUM_EMITTERS = 4
 

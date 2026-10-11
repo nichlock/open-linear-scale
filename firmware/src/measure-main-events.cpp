@@ -215,7 +215,7 @@ uint32_t emitter_state_gpio_bsrr[casm::EMITTER_STATE_COUNT] = {0};
 // Sample Naming Convention
 // There are several types of samples that run at many different rates.
 // 1. **Conversion**: ADC individual sample/convert cycle
-// 2. **Oversample**: The value at the end of the ADC's hardware oversample completes
+// 2. **Oversample**: The value once the ADC's hardware oversample completes.
 // 3. **Sequence**:   The overall sequence running at 1kHz.
 //
 // There is also a **Transient**: This is a logical-only value. It represents the

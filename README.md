@@ -2,7 +2,7 @@
 
 TODO: photo goes here
 
-## Key Details
+# Overview
 
 | Parameter    | Value            |
 | ------------ | ---------------- |
@@ -11,38 +11,91 @@ TODO: photo goes here
 | Accuracy     | 40µm (1.6 thou)* |
 | Output Type  | UART (todo SSI)  |
 
-*Assuming static room temperature. This is a little conservative for the electrical precision and resolution. For a deep dive on the real measurement error, see [Practical Accuracy Measurements](LINK TODO)
+*Assuming static room temperature. This is a little conservative for the electrical precision and resolution. For a deep dive on the real measurement error, see [Practical Accuracy Measurements](#practical-accuracy-measurements)
+
+## Quickstart
+
+1. Order the 4-layer sensor and the reflector.
+2. Assemble.
+3. Flash the firmware.
+4. Apply Kapton for the [0.1mm gap](#mechanical-integration).
+5. Set the trimmer.
+6. Run `LiveView.py`.
+7. 
+## Why make this
+
+This sensor is the outcome of a personal project I've had for a while. I started by simply reverse-engineering digital capacitive calipers, and I wanted to publish a functional capacitive encoder since I had trouble finding much information on them publicly available.
+
+I hope this project can be useful to someone, but my real goal was to learn more, not to replace existing pro-grade encoders.
 
 ## What's Included
 
+This is an incremental capacitive encoder. It's the same technology as what you would find on older pro-grade capacitive linear scales. These days incremental capacitive encoders are mostly found on hobby-grade digital calipers.
+
+This sensor is incremental. It detects a position precisely within periods of 5.08mm. Outside of those periods, it coarsely counts number of 5.08mm periods it has passed through. At power-up, it assumes it is at position zero. The sensor would require zeroing/homing on every power-up because of that.
+
+There are a few disciplines of the design work. These are split up in the directories:
 - `hardware`: The kicad PCB designs.
 - `firmware`: Firmware for the sensor PCB.
 - `mechanical`: Mechanical test fixtures.
-- `tests`: Python scripts used for testing accuracy.
 
+There is also test code in the `tests` directory.
+
+Each has its own readme with deeper-dives into some topics.
+
+## Technical Overview
+
+<!-- PHOTO: sensor (grid side up) next to the reflector (pad side up), so the two matching patterns are visible -->
+
+The encoder has two parts: a **sensor PCB** that moves along the axis, and a passive **reflector PCB** fixed along its length. They should not touch. The copper faces sit about 0.1 mm apart.
+
+**Sensing.** The underside of the sensor has a repeating row of transmit electrodes, called *emitters*. There are eight per 5.08 mm period. The sensor also has one long receive (RX) antenna. The reflector has T-shaped pads which couple groups of emitters to the RX antenna. The position of the reflector relative to the sensor changes emitters couple and how strongly they couple.
+
+<!-- PHOTO/DIAGRAM: annotated close-up of the emitter grid, RX antenna and reflector pads -->
+
+**Measurement cycle.** The STM32 steps the emitters through a fixed 16-step pattern on its 8 emitter GPIO pins. At each step, some emitters transition high-to-low or low-to-high. A charge couples through the reflector into the RX antenna and is captured by a charge integrator. The integrated charge is low-pass filtered and oversampled by the ADC. One full sequence takes 1 ms by default. The steps run at 16 kHz, so a full sequence completes at 1 kHz.
+
+**Position estimate.** The [Functional Description](#functional-description) section details how a position within the period is derived from the pulses. Successive estimates are unwrapped into a continuous position, so the sensor must move less than a quarter of a period (1.27 mm) per sequence. That works out to about 1.2 m/s at the default 1 ms sequence.
+
+**Output.** UART at 460800 baud. The firmware currently streams the raw lane data, and the scripts in `tests/` compute the position on the host. On-sensor position output and an SSI interface are planned.
+
+![System Block Diagram](docs/plots/system-block-diagram.png)
+
+The sections below cover each of these steps in detail.
+
+## Status and Limitations
+
+This is a capacitive encoder. It is sensitive to liquid ingress. At these sensitivities, there are also concerns of thermal expansion over large distances. These should be considered in the implementation.
+
+When I set out on this project, I hoped for a noise floor of 1µm and an electrical accuracy of 10µm. I'm still working towards that. There's a few more features that I'm working on:
+- Automatic Electrical Calibration.
+- Temperature compensation.
+- Reduce reliance on the STM32L4's analog peripherals (since it is becoming harder to get), and replace with a more standard STM32 and a discrete analog frontend.
+- Various improvements to the layout and mechanical design.
+- Absolute position sensing.
 
 # Practical Accuracy Measurements
 
-I measured the error with a Mitutoyo 543-793B-12 digital indicator. More details are in the mechanical readme (TODO link).
+I measured the error with a Mitutoyo 543-793B-12 digital indicator. More details are in the [mechanical readme](mechanical/README.md).
 
 I moved the sensor by a total of 9mm in steps of 0.1mm using my 3D printer. The stepsize was not perfect, but it's not a part of the analysis because the indicator tells me a true position of my sensor. I then processed the measurements using a median filter (see the noise section for more information).
 
 ![Four Layer Sensor Error](docs/4-layer-sensor-error-median-filtered.png)
 
-There are two parts to the error. The noise, which is shown in blue, and the averaged error, in black.
+There are two parts to the error. The noise, which is shown in blue, and the averaged error, in black. I consider these in detail in the next sections.
 
 ## Averaged Error
 
 The averaged error has a very long 2-second window, so I'm taking it to be the physical measurement error.
 
 There's a few sources here:
-- The largest source is a periodic error that seems to correlate to the posistion. These are the two large triangular deviations around 1~3 and 7~9mm. It might be possible to calibrate this out, but I haven't tried that yet.
+- The largest source is a periodic error that seems to correlate to the position. These are the two large triangular deviations around 1~3 and 7~9mm. It might be possible to calibrate this out, but I haven't tried that yet.
 - Another source of error is a smaller triangular-looking error per each emitter. This is periodic over one emitter of 0.635mm.
 - Finally, a major source of error here is the general drift. From 0~2mm, I think there is a drift of about 20µm. It's hard to say how large this is, but since it's not periodic, it's probably caused by my 3D printed assembly, with little in the way of proper constraints, bending out of shape.
 
 ## Noise
 
-The noise is smaller than the averaged error, which is good. I plotted the standard deviation and peak observed error.
+The noise is smaller than the averaged error. I plotted the standard deviation and peak observed error.
 
 ![Four Layer Sensor Noise](docs/4-layer-sensor-noise-median-filtered.png)
 
@@ -54,20 +107,20 @@ Below is a PSD of the noise frequencies.
 The noise also has a few sources.
 
 - Most of the noise is white noise. This can be seen in FFTs of the measurements.
-- There is one clear frequency where noise is persistent at around 10~14Hz and the next 3 harmonics (on the PSD these are the peaks at the beginning). Sometimes the frequency varies depending on my setup. This low-frequency "noise" is being caused by real physical resonance of my 3D printer's relative z-height by a few µm. I'm working on a better mechanical setup that should help with this. For conservatism, I don't erase it from my analsyis here.
-- There is a big spike in the middle of the graph. In short this is caused by assymetric emitter "strengths". When the algorithm jumps from a linearly interpolating using one emitter over another, there is a small change in the output because those emitters don't necesarily predict an identical value. This particular position happened consistnatly jump between two emitters. I believe this can be helped through calibration, but I haven't looked into that yet.
+- There is one clear frequency where noise is persistent at around 10~14Hz and the next 3 harmonics (on the PSD these are the peaks at the beginning). Sometimes the frequency varies depending on my setup. This low-frequency "noise" is being caused by real physical resonance of my 3D printer's relative z-height by a few µm. I'm working on a better mechanical setup that should help with this. For conservatism, I don't erase it from my analysis here.
+- There is a big spike in the middle of the graph. In short this is caused by asymmetric emitter "strengths". When the algorithm jumps from a linearly interpolating using one emitter over another, there is a small change in the output because those emitters don't necessarily predict an identical value. This particular position happened consistently jump between two emitters. I believe this can be helped through calibration, but I haven't looked into that yet.
 
-All of these can be helped by averaging and filtering. I only present data here after performing a median filter. An example of completely unfiltered noise is in [this picture](docs/4-layer-sensor-noise-raw.png). I'm keeping the median filter for my analysis because I do think it makes physical sense to keep it long-term.
+All of these can be helped by averaging and filtering. I only present data here after performing a 3-step median filter. An example of completely unfiltered noise is in [this picture](docs/4-layer-sensor-noise-raw.png). I'm keeping the median filter for my analysis because I do think it makes physical sense to keep it long-term.
 
 A final note is on the effect of averaging on this noise. Below is an Allan Deviation.
 
-![Four Layer Sensor Noise PSD](docs/allan-deviation-median-filter.png)
+![Four Layer Sensor Noise Allan Deviation](docs/allan-deviation-median-filter.png)
 
 ## Error Disposition
 
-I chose to report a conservative number for the precision and resolution. I did that because there is too much uncertainty in my mechancial setup and algorithms for me to feel comfortable listing exact numbers on what I measured.
+I chose to report a rough conservative number for the accuracy. I got the number visually from the plots. I did that because there is too much uncertainty in my mechanical setup and algorithms for me to feel comfortable listing exact numbers on what I measured.
 
-# Functional Description and Design Details
+# Functional Description
 
 There are two key pieces of the encoder: The sensor and the reflector.
 
@@ -77,104 +130,198 @@ TODO: annotated picture of top and bottom
 
 The sensor has an STM32L4, a microcontroller with lots of built-in analog peripherals.
 
-The sensor has a sensing grid. In the grid is a repeating pattern of 8 seperate TX antennas, called emitters.
+The sensor has a sensing grid. In the grid is a repeating pattern of 8 separate TX antennas, called emitters.
 
 The sensor also has an RX antenna. The RX antenna feeds into a charge integrator and anti-aliasing filter.
 
-TODO: circuit diagram
+![RX Input Chain Schematic](docs/schematics/rx-chain.png)
+
+The sensor PCB was designed to be fully compatible with a 2-layer fabrication. But in practice the shielding of the internal ground layers helped the position accuracy a lot, so I recommend the full 4 layer build.
 
 ## Reflector PCB
 
 The reflector PCB has many 'T' shaped copper pads. The goal of these is to 'reflect' the capacitance of the four of the eight repeating emitters into the antenna.
 
+It's possible to make the reflector as long as you can afford. I have only tested on a reflector with a 50mm travel for convenience (and because I can only measure high accuracy in small increments). To make it longer, you would simply have to copy a repeat of the existing pattern of T's and space-filling rectangles in the PCB design.
+
 TODO: annotated picture
 
-## Functionality
+## Measurement Cycle
 
-The alignment of the reflector to the emitters is what the sensor is measuring. The refector and pickup are connected by capacitance.
+The measurement cycle runs a 16-step measurement sequence that is covered in detail below. This is an overview of each step of the sensing algorithm.
 
-Consider a single emitter. If the reflector is overlapping that emitter, there is a strong capacitance from the emitter to the recieving antenna. If the reflector is not overlapping that emitter, there is no extra capacitance. When the emitter is overlapped, and a digital transition from low to high is applied, the recieving antenna sees a pulse.
+![Functional Diagram](docs/plots/functional-diagram.png)
+
+The sensing hardware operates on a 16kHz signal. There are 16 pulses that it runs through. Once it runs all 16 pulses, it puts those measurements through the position algorithm. The timing diagram below illustrates an example of the 16 states.
+
+![Measurement Sequence Timing Diagram](docs/plots/timing-diagram.png)
+
+The integrator output always looks something like the shown image, but as the position varies, it will look like it is phase-shifted compared to the zero position.
+
+There are a few "samples" in this measurement strategy. For consistency, I came up with specific definitions for this project:
+
+1. **Conversion**: ADC individual sample/convert cycle (one pulse in the ADC row in the plot above).
+2. **Oversample**: The value once the ADC's hardware oversample completes (one full state in the plot above).
+3. **Sequence**:   The overall sequence running at 1kHz (the entire time plot above).
+
+There is also the **Transient**: This is not a sample, but a term I use to refer to the change in the emitter states and the change induced on the receiving antenna. When used in the algorithms, it represents measurement after the [cancellations](#combined-symmetric-measurements) are performed.
+
+# The Position Algorithm
+
+I go over the position algorithm here. Rather than simply explain the steps, which is better done by the implementation in code, my goal here is to build up the rationale behind why each step is needed.
+
+The alignment of the reflector to the emitters is what the sensor is measuring. The reflector and pickup are connected by capacitance.
+
+Consider a single emitter. If the reflector is overlapping that emitter, there is a strong capacitance from the emitter to the receiving antenna. If the reflector is not overlapping that emitter, there is no extra capacitance. When the emitter is overlapped, and a digital transition from low to high is applied, the receiving antenna sees a pulse.
 
 There is a period where the emitter is only partially overlapped by the reflector. The area of overlap decreases roughly linearly with the movement.
 
-TODO: diagram of the capacitance vs. position
+![Single Emitter Capacitance](docs/plots/readme-single-emitter-cap.png)
 
-With more emitters, the effect stacks linearly. If there are two emitters, double the capacitance is seen.
+With more emitters, the effect stacks linearly. By driving the first four emitters low-to-high and the next four high-to-low, we can tell where the reflector is based on the size of the pulse.
 
-By driving the first four emitters low-to-high and the next four high-to-low, we can tell where the reflector is based on the size of the pulse.
+In the plot, "coupling" goes negative. This just means that the sensor is aligned with the "negative" voltage transient of the sensor, not negative capacitance.
 
-TODO: diagram of the time-domain signals for various positions showing how we get a position
+![Differential Emitter Coupling vs. Position](docs/plots/readme-differential-emitter-cap.png)
 
 That's technically enough to get a position. But there are two problems.
 1. We don't know the pulse size of a fully overlapped emitter, and it will vary with time.
-2. Because of the repeating nature of the design, a measured pulse size actually has two possible positions.
+2. Because of the repeating nature of the design, a measured pulse size actually has two possible positions. For example, in the picture below we would measure positions of 3.1 or 4.9, and we don't know which we have.
 
-TODO: diagramatically show these
+![Position Ambiguity From a Single Pulse](docs/plots/readme-position-ambiguity.png)
 
 Both of these problems are solved by adding more measurements. Instead of only sampling one location, we 'slide' the pattern across all eight emitters. We then get eight discrete pulse sizes. The second four of these are the negative equivalent to the first four. So these are combined to get four pulses.
 
-TODO: diagram of the four pulses
+![Sliding Pulse Samples](docs/plots/readme-sliding-samples.png)
 
 We can now solve for two positions "choices" using each of the four pulses. We can then determine the common solution across all four pulses. But that can create problems near edges due to noise, which creates a measurement error greater than the signal noise level. It's also nonlinear.
 
-As it happens, a way to get lower noise and to avoid the nonlinearity is to find the zero crossing of the line drawn by the pulses.
+A way to get lower noise and to avoid the nonlinearity is to find the zero crossing of the line drawn by the pulses. Depending on the convention there might be a constant offset (-2 in the picture below).
 
-TODO: diagram of a nonlinear 'skip', and of the linear interp operation
+![Zero Crossing of Sampled Pulses](docs/plots/readme-sampled-waveforms.png)
 
-## Practical Matters
+There are some practical matters left consider in the design and algorithm:
 
-There are some practical matters to consider in the design:
-
-1. The pulses do not always cross zero.
-2. We can't directly apply a set of sliding pulses.
+1. The samples do not always cross zero.
+2. We can't repeatedly apply positive or negative pulses on a digital line.
 3. The emitters and reflectors have non-zero spacing.
 
-### Pulse Sequences That Don't Cross Zero
+## Pulse Sequences That Don't Cross Zero
 
-TODO: photo of non-zero-crossing and the wrapped zero. it should be clear than you can't interp the non-crossing values
+Fortunately there is an easy solution here. Because this is periodic, all we need to do is wrap the first pulse after the last pulse and interpolate there. We create a virtual sample at location 4 that is equal to the negative of location 0. That will always produce a zero crossing if there wasn't already one.
 
-Fortunately there is an easy solution here. Because this is periodic, all we need to do is wrap the first pulse after the last pulse and interpolate there. That will always produce a zero crossing if there wasn't already one.
+![Wrapped Samples Creating a Zero Crossing](docs/plots/readme-wrapped-samples.png)
 
-### Practical Sliding Pulses
+## Repeated Positive/Negative Pulses
 
 If we want to apply real sliding pulses, we would need to repeatedly step up the emitter voltages. We can only go low-to-high once in a row. There needs to be a high-to-low transition before another low-to-high can happen.
 
-TODO: image of this
+The solution I landed on was a partial transient that flips three of the emitters. Why not flip one emitter? We still want to use this extra transient to derive position information. Otherwise it is somewhat wasted. Three emitters create a larger signal, and one where we can still derive a position using the same interpolation method.
 
-The solution I landed on was a partial transient that flips three of the emitters. Why not flip one emitter? We can actually use the three emitters.
+![Sliding Samples With Three-Emitter Transients](docs/plots/readme-sliding-samples-hidden.png)
 
-The pulsed three emitters give a similar pulse sequence to the four emitters. The only difference is that it can only reach 3/4ths of the magnitude that the four-emitter sequence can reach. But within that range, the signal looks exactly the same. We can use the same zero-crossing algorithm to determine a position. We only need to subtract 0.5 from the estimate.
+The pulsed three emitters give a similar pulse sequence to the four emitters. The only difference is that it can only reach 3/4ths of the magnitude that the four-emitter sequence can reach. But within that range, the signal looks exactly the same. We can use the same zero-crossing algorithm to determine a position. 
 
-TODO: comparison of the four vs three emitters
+The estimate is slightly different: it's shifted ahead by an extra 0.5 emitters. We only need to add 0.5 to the estimate to get a match.
 
-### Non-Zero Spacing
+![Zero Crossing With Three-Emitter Transients](docs/plots/readme-sampled-waveforms-hidden.png)
+
+## Non-Zero Spacing
 
 The emitter and reflector pattern need to have electrical clearance.
 
 If we take the naive assumption of parallel plate capacitance, we would conclude that the measurement signal simply does not change here, and a position between these locations cannot be recovered.
 
-In reality, assuming the spacing is small relative to the copper width, fringing at the copper edges contributes significantly to capacitance. There is actually a smooth and mostly linear transition here.
+In reality, assuming the spacing is small relative to the copper width, fringing at the copper edges contributes significantly to capacitance. There is actually a smooth transition here. Unfortunately the transition is not simply a "straight line".
 
-TODO: Diagram of clearance. Show naive assumption and practical fringing.
+This is less of an issue if the sensor and reflector are separated. I usually separate by about 0.1mm. I tried plotting the error without that separation. The image below gives an example of the error, despite fringing, that will happen without a spacing (with the PCBs touching).
 
-## Analog Input
+![Fringing Error With PCBs Touching](docs/close-emitter-fringing-error.png)
 
-We have a capacitive pulse on the recieving antenna.
+## Combined Symmetric Measurements
 
-TODO: diagram of the rx circuitry with what the signal looks like
+There are a few symmetries that I take advantage of in the sensor and signals.
 
-### ADC-Only Samples
+We have 8 emitters that we pulse high and low. The second half of the emitters is always the inverse of the first half.
 
-One way to measure this is to put it directly in to an ADC. At first, this was all I did.
+In the code, the emitter states are defined by `emitter_states`. These are states in time, but what we measure is based on the difference between one state and the next.
 
-This method works well enough for low-accuracy applications. There are two problems:
-1. The ADC needs to use very small sample windows, leading to susceptibility to high-frequency noise.
-2. The signal can't be conditioned easily. It's possible to put this through a filter. This would require a follower opamp with a relatively high slew rate to capture the short-lived initial pulse. Also, the shape of the pulse is not conducive to anti-alias filtering. I was getting massive problems with power supply noise while testing near my 3D printer.
+![Emitter State Transitions](docs/plots/emitter-state-transitions-diagonal.png)
 
-### Charge Integrator
+Notice that the second half is an inverted repeat of the first half. 
+
+Also, there is also an interleaved pattern. The first transient has six emitters changing, the second four, then three, four, and so on. I've called these two patterns "lanes".
+
+We're left with two lanes of four values each. In most of my analysis, I only consider four emitters and four transient patterns, because that mostly describes the signals we get.
+
+Finally, from each transient in each lane, we can get a position estimate as described above. We get 8 estimates. Each one has its own offset. After applying the offset, we can average all of these together. 
+
+(Note that the offsets are all relative. It's not critical whether an offset starts at one transient or another. It's just important that the difference relative to each other is consistent.)
+
+# Analog Frontend
+
+We receive a voltage pulse on the receiving antenna. The height of the pulse depends on the capacitive coupling, and the length of time that the pulse lasts depends on the resistive leakage.
+
+Below is a schematic of the input circuitry. I explain the rationale in the subsequent sections.
+
+![RX Input Chain Schematic](docs/schematics/rx-chain.png)
+
+## ADC-Only Samples
+
+One way to measure the RX input is to put it directly in to an ADC. At first, this was all I did.
+
+This method works well enough for low-accuracy. There are two problems:
+1. The ADC needs to use very small sample windows, making it vulnerable to noise.
+2. The signal can't be conditioned easily. The shape of the pulse is also not conducive to anti-alias filtering. As a consequence, I was getting massive problems with above-nyquist electrical noise while testing near my 3D printer.
+
+## Charge Integrator
 
 A major improvement to this design was the charge integrator. This allows us to widen the ADC window all the way to a zeroth order hold.
 
 The charge integrator creates a gain that is the ratio of the two capacitors. I used a trimmer capacitor for adjustable gain.
 
-This doesn't solve anti-aliasing alone, so an anti-alias filter is added on. The filter slews the signal significantly, but this still results in a better SNR in the presence of my 3D printer's 23kHz noise.
+Another major benefit is that we can now oversample the ADC over a long window of time. That alone gives a better SNR.
+
+Although this did improve the SNR against white noise, it doesn't solve the entire anti-aliasing problem. Most noise still goes right through the charge integrator. My 3D printer's major noise component comes in 23kHz, compared to a sample window of 16kHz (this was before I added any shielding). So an anti-alias filter is added on. The filter slews the signal significantly, but it results in a much better SNR in the presence of above-nyquist electrical noise.
+
+The integrator is leaky (100MΩ resistor) in order to prevent DC drifting.
+
+The firmware measures the difference between one integrator state and the next, not the magnitude of one pulse against vref. That means we don't have to worry about resetting the integrator.
+
+## VREF
+
+Vref is chosen at 50% VDDA, or 1.65V. It's generated by a DAC. There could be benefits to tuning VREF live since there seems to be asymmetry in the I/O leakage, pulling the average DC value away from 50% VCC. That would give more budget for a higher input gain. This isn't a major contributor to accuracy issues so I don't do it right now.
+
+## Trimmer
+
+The easiest way to set the trimmer is to twist it while monitoring the integrator output on an oscilloscope. I also do it by using the LiveView test script, but that can be a little cumbersome due to delays in the plotting. I'm working on a cleaner way of doing this using less data over UART or even by using the onboard LED.
+
+The trimmer I specified only goes down to 4.5pF. It gained the capacitive pulse up to 1Vpp. I would like a higher magnitude to help reduce the impact of the white noise at the ADC input, although that is scope for future work.
+
+# Mechanical Integration
+
+TODO: Photo of design
+
+The sensor PCB and reflector PCB were both designed to be aligned using 3mm pins and then mounted using M3 fasteners.
+
+There needs to be a separation between the sensor PCB and the reflector. I aim for 0.1mm. Without this, this signal is larger, but [physical nonlinearities](#non-zero-spacing) eat up any SNR benefit.
+
+I have not determined the sensitivity to this gap, to offset, or to tilt. It does not seem to be massive. In theory it should perform relatively well against these.
+
+I tried 3D printing a shim for this, but I found that a much easier and more accurate way to create that separation was two layers of Kapton tape.
+
+TODO: photo of kapton'd sensor board
+
+A typical mechanical stackup is shown below. See the mechanical folder's README for more details.
+
+| Color      | Purpose                                                                         |
+| ---------- | ------------------------------------------------------------------------------- |
+| Red        | Mounting baseplate.                                                             |
+| (Multiple) | Sensor PCB.                                                                     |
+| Cyan       | Shim between PCB bottom and slider housing.                                     |
+| (Multiple) | Reflector PCB.                                                                  |
+| Green      | Slider housing which restrains the sensor PCB.                                  |
+| Blue       | Reflector mount (takes the place of mounting the reflector to a rigid machine). |
+
+
+![Mechanical Stackup](docs/mechanical-stackup.PNG)
