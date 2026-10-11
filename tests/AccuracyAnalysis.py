@@ -59,39 +59,39 @@ def estimatePosition(measurments):
     def runEstimate(readings):
         zeros = np.zeros(2)
 
-        for phase in [0, 1]:
-            first_sign = readings[0][phase] >= 0
+        for lane in [0, 1]:
+            first_sign = readings[0][lane] >= 0
             transition_idx = NUM_EMITTERS
 
             # Look for the first zero crossing and interpolate
             for test_idx in range(NUM_EMITTERS):
-                if ((readings[test_idx][phase] >= 0) != first_sign):
+                if ((readings[test_idx][lane] >= 0) != first_sign):
                     transition_idx = test_idx
                     break
 
             # Handle edge-cases that do not explicitly cross within the first four
             if transition_idx == NUM_EMITTERS:
                 # Handle waveforms that do not explicitly cross 0
-                x1 = readings[NUM_EMITTERS - 1][phase]
-                x2 = -readings[0][phase]
+                x1 = readings[NUM_EMITTERS - 1][lane]
+                x2 = -readings[0][lane]
             else:
-                x1 = readings[transition_idx - 1][phase]
-                x2 = readings[transition_idx][phase]
+                x1 = readings[transition_idx - 1][lane]
+                x2 = readings[transition_idx][lane]
 
             interp = -x1 / (x2 - x1)
-            zeros[phase] = interp + transition_idx
+            zeros[lane] = interp + transition_idx
 
-            # Handle the phase shift
-            if phase:
-                zeros[phase] -= 0.5
+            # Handle the lane offset
+            if lane:
+                zeros[lane] -= 0.5
 
             # Handle overflows above/below four
-            zeros[phase] %= 4
+            zeros[lane] %= 4
 
         dist = zeros[0] - zeros[1]
 
         if abs(dist) > 3.75:
-            # One phase has overflowed but the other hasn't.
+            # One lane has overflowed but the other hasn't.
             # Averaging would choose a midpoint (ie. we'd get '2' when we're actually at 4 (=0)).
             # We'll just pick one and run with it.
             return zeros[0]
@@ -171,13 +171,13 @@ def focusPlotSingleEstimate(estimate_positions, raw_samples, focal_index):
     _, ax = plt.subplots(4, sharex=True)
     for tr in range(4):
         ax[0].plot(raw_samples[focal_index, :, tr], marker='o')
-    ax[0].title.set_text('phase 0')
+    ax[0].title.set_text('lane 0')
     for tr in range(4):
         ax[1].plot(raw_samples[focal_index, :, tr + 4], marker='o')
-    ax[1].title.set_text('phase 1')
+    ax[1].title.set_text('lane 1')
     for tr in range(8):
         ax[2].plot(raw_samples[focal_index, :, tr] - np.mean(raw_samples[focal_index, :, tr]), marker='o')
-    ax[2].title.set_text('errors in both phases')
+    ax[2].title.set_text('errors in both lanes')
     ax[3].plot(estimate_positions[focal_index, :], marker='o')
     ax[3].title.set_text('Position Estimate')
     [a.grid(True) for a in ax]
@@ -268,19 +268,19 @@ def plotRawAgainstPos(commanded_positions, estimate_positions, raw_samples):
     for pos in range(len(commanded_positions)):
         for idx in range(4):
             ax[0].scatter(np.repeat(commanded_positions[pos], raw_samples.shape[1]), raw_samples[pos, :, idx], c=f'C{idx}', alpha=0.1)
-    ax[0].title.set_text('phase 0')
+    ax[0].title.set_text('lane 0')
     for pos in range(len(commanded_positions)):
         for idx in range(4):
             ax[1].scatter(np.repeat(commanded_positions[pos], raw_samples.shape[1]), raw_samples[pos, :, idx + 4], c=f'C{idx}', alpha=0.1)
-    ax[1].title.set_text('phase 1')
+    ax[1].title.set_text('lane 1')
 
     _, ax = plt.subplots(3, sharex=True)
     for tr in range(4):
         ax[0].plot(commanded_positions, np.mean(raw_samples[:, :, tr], axis=-1), c=f'C{tr}', alpha=0.5)
-    ax[0].title.set_text('phase 0')
+    ax[0].title.set_text('lane 0')
     for tr in range(4):
         ax[1].plot(commanded_positions, np.mean(raw_samples[:, :, tr + 4], axis=-1), c=f'C{tr}', alpha=0.5)
-    ax[1].title.set_text('phase 1')
+    ax[1].title.set_text('lane 1')
     ax[2].plot(commanded_positions, np.mean(estimate_positions, axis=-1))
     # ax[2].fill_between(commanded_positions, np.min(estimate_positions, axis=-1), np.max(estimate_positions, axis=-1))
     ax[2].plot(commanded_positions, commanded_positions, 'k--', alpha=0.5)
@@ -291,10 +291,10 @@ def plotRawPlain(commanded_positions, raw_samples):
     _, ax = plt.subplots(3, sharex=True)
     for tr in range(4):
         ax[0].plot(np.mean(raw_samples[:, :, tr], axis=-1), c=f'C{tr}', alpha=0.5)
-    ax[0].title.set_text('phase 0')
+    ax[0].title.set_text('lane 0')
     for tr in range(4):
         ax[1].plot(np.mean(raw_samples[:, :, tr + 4], axis=-1), c=f'C{tr}', alpha=0.5)
-    ax[1].title.set_text('phase 1')
+    ax[1].title.set_text('lane 1')
     ax[2].plot(commanded_positions, 'k--', alpha=0.5)
     ax[2].title.set_text('Position')
 

@@ -44,9 +44,9 @@ def parse_known_mode(raw,  mode):
         # if any(abs(value) > 1000 for value in values):
         #     return float("nan"), [float("nan")] * 4, [float("nan")] * 4, False
         position = estimatePosition(np.array([values]))[0]
-        phase0 = [values[0], values[1], values[2], values[3]]
-        phase1 = [values[4], values[5], values[6], values[7]]
-        return position * (PERIOD_SIZE_MM / NUM_EMITTERS), phase0, phase1, True
+        lane0 = [values[0], values[1], values[2], values[3]]
+        lane1 = [values[4], values[5], values[6], values[7]]
+        return position * (PERIOD_SIZE_MM / NUM_EMITTERS), lane0, lane1, True
 
     if mode == "indexed":
         # rd,reading[0..7],checksum where checksum == sum(reading[0..7])
@@ -62,9 +62,9 @@ def parse_known_mode(raw,  mode):
         if checksum != sum(readings):
             return float("nan"), [float("nan")] * 4, [float("nan")] * 4, False
         position = estimatePosition(np.array([readings]))[0]
-        phase0 = [readings[0], readings[1], readings[2], readings[3]]
-        phase1 = [readings[4], readings[5], readings[6], readings[7]]
-        return position * (PERIOD_SIZE_MM / NUM_EMITTERS), phase0, phase1, True
+        lane0 = [readings[0], readings[1], readings[2], readings[3]]
+        lane1 = [readings[4], readings[5], readings[6], readings[7]]
+        return position * (PERIOD_SIZE_MM / NUM_EMITTERS), lane0, lane1, True
 
     try:
         raw_int = int(raw, 16)
@@ -77,9 +77,9 @@ def parse_known_mode(raw,  mode):
 
 def detect_mode(raw):
     for candidate in ("raw", "indexed", "hex"):
-        position, phase0, phase1, ok = parse_known_mode(raw, candidate)
+        position, lane0, lane1, ok = parse_known_mode(raw, candidate)
         if ok:
-            return candidate, position, phase0, phase1
+            return candidate, position, lane0, lane1
     return None
 
 
@@ -106,17 +106,17 @@ def reader_loop(ser, start_time, out_queue, debug_log):
                 out_queue.put(RuntimeError(f"{MAX_CONSECUTIVE_BAD_ROWS} consecutive malformed rows received"))
                 return
             continue
-        mode, position, phase0, phase1 = detected
+        mode, position, lane0, lane1 = detected
         print(f"Detected {mode} mode")
         consecutive_bad_rows = 0
-        out_queue.put((sample_index * SAMPLE_PERIOD_SECONDS, position, phase0, phase1))
+        out_queue.put((sample_index * SAMPLE_PERIOD_SECONDS, position, lane0, lane1))
         sample_index += 1
 
     while True:
         raw = read_line()
         if not raw:
             continue
-        position, phase0, phase1, ok = parse_known_mode(raw, mode)
+        position, lane0, lane1, ok = parse_known_mode(raw, mode)
         if ok:
             consecutive_bad_rows = 0
         else:
@@ -124,7 +124,7 @@ def reader_loop(ser, start_time, out_queue, debug_log):
             if consecutive_bad_rows >= MAX_CONSECUTIVE_BAD_ROWS:
                 out_queue.put(RuntimeError(f"{MAX_CONSECUTIVE_BAD_ROWS} consecutive malformed rows received"))
                 return
-        out_queue.put((sample_index * SAMPLE_PERIOD_SECONDS, position, phase0, phase1))
+        out_queue.put((sample_index * SAMPLE_PERIOD_SECONDS, position, lane0, lane1))
         sample_index += 1
 
 
@@ -201,8 +201,8 @@ def main():
     times = deque()
     positions = deque()
     transient_times = deque()
-    transients_phase0 = deque()
-    transients_phase1 = deque()
+    transients_lane0 = deque()
+    transients_lane1 = deque()
     out_queue = queue.Queue()
 
     plt.ion()
@@ -212,17 +212,17 @@ def main():
     ax.set_ylabel("Position (mm)")
 
     transient_fig, transient_axes = plt.subplots(2, sharex=True)
-    phase_lines = [
+    lane_lines = [
         [ax.plot([], [], label=f"transient {i}")[0] for i in range(4)]
         for ax in transient_axes
     ]
-    for phase, phase_ax in enumerate(transient_axes):
-        phase_ax.set_title(f"Phase {phase}")
-        phase_ax.set_ylabel("Transient value")
+    for lane, lane_ax in enumerate(transient_axes):
+        lane_ax.set_title(f"Lane {lane}")
+        lane_ax.set_ylabel("Transient value")
     transient_axes[-1].set_xlabel("Time (s)")
 
     position_cursor = CursorTool(ax)
-    transient_cursors = [CursorTool(phase_ax) for phase_ax in transient_axes]
+    transient_cursors = [CursorTool(lane_ax) for lane_ax in transient_axes]
 
     stop_event = threading.Event()
 
@@ -253,13 +253,13 @@ def main():
                         break
                     if isinstance(item, Exception):
                         raise item
-                    now, position, phase0, phase1 = item
+                    now, position, lane0, lane1 = item
                     times.append(now)
                     positions.append(position)
-                    if phase0 is not None:
+                    if lane0 is not None:
                         transient_times.append(now)
-                        transients_phase0.append(phase0)
-                        transients_phase1.append(phase1)
+                        transients_lane0.append(lane0)
+                        transients_lane1.append(lane1)
 
                 if times:
                     now = times[-1]
@@ -274,20 +274,20 @@ def main():
 
                 while transient_times and transient_times[0] < now - HISTORY_SECONDS:
                     transient_times.popleft()
-                    transients_phase0.popleft()
-                    transients_phase1.popleft()
+                    transients_lane0.popleft()
+                    transients_lane1.popleft()
 
                 if transient_times:
-                    for phase_transients, lines in zip(
-                        (transients_phase0, transients_phase1), phase_lines
+                    for lane_transients, lines in zip(
+                        (transients_lane0, transients_lane1), lane_lines
                     ):
-                        phase_array = np.array(phase_transients)
+                        lane_array = np.array(lane_transients)
                         for i, transient_line in enumerate(lines):
-                            transient_line.set_data(transient_times, phase_array[:, i])
-                    for phase_ax in transient_axes:
-                        phase_ax.set_xlim(max(0, now - HISTORY_SECONDS), max(now, HISTORY_SECONDS))
-                        phase_ax.relim()
-                        phase_ax.autoscale_view(scalex=False, scaley=True)
+                            transient_line.set_data(transient_times, lane_array[:, i])
+                    for lane_ax in transient_axes:
+                        lane_ax.set_xlim(max(0, now - HISTORY_SECONDS), max(now, HISTORY_SECONDS))
+                        lane_ax.relim()
+                        lane_ax.autoscale_view(scalex=False, scaley=True)
 
                 position_cursor.refresh()
                 for transient_cursor in transient_cursors:

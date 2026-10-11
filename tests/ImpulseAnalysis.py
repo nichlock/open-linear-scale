@@ -36,40 +36,40 @@ def estimatePosition(measurments):
     def runEstimate(readings):
         zeros = np.zeros(2)
 
-        for phase in [0, 1]:
-            first_sign = readings[0][phase] >= 0
+        for lane in [0, 1]:
+            first_sign = readings[0][lane] >= 0
             transition_idx = NUM_EMITTERS
 
             # Look for the first zero crossing and interpolate
             for test_idx in range(NUM_EMITTERS):
-                if ((readings[test_idx][phase] >= 0) != first_sign):
+                if ((readings[test_idx][lane] >= 0) != first_sign):
                     transition_idx = test_idx
                     break
 
             # Handle edge-cases that do not explicitly cross  within the first four
             if transition_idx == NUM_EMITTERS:
                 # Handle waveforms that do not explicitly cross 0
-                x1 = readings[NUM_EMITTERS - 1][phase]
-                x2 = -readings[0][phase]
+                x1 = readings[NUM_EMITTERS - 1][lane]
+                x2 = -readings[0][lane]
             else:
-                x1 = readings[transition_idx - 1][phase]
-                x2 = readings[transition_idx][phase]
+                x1 = readings[transition_idx - 1][lane]
+                x2 = readings[transition_idx][lane]
 
             interp = -x1 / (x2 - x1)
-            zeros[phase] = interp + transition_idx
+            zeros[lane] = interp + transition_idx
 
-            # Handle the phase shift
-            if phase:
-                zeros[phase] -= 0.5
+            # Handle the lane offset
+            if lane:
+                zeros[lane] -= 0.5
 
             # Handle overflows above four
-            if zeros[phase] >= 4:
-                zeros[phase] -= 4
+            if zeros[lane] >= 4:
+                zeros[lane] -= 4
 
         dist = zeros[0] - zeros[1]
 
         if abs(dist) > 3.75:
-            # One phase has overflowed but the other hasn't.
+            # One lane has overflowed but the other hasn't.
             # Averaging would choose a midpoint (ie. we'd get '2' when we're actually at 4 (=0)).
             # We'll just pick one and run with it.
             return zeros[0]
@@ -194,7 +194,7 @@ def main():
     # raw_samples_3 = np.array(data['samples'])
 
     positions_1 = estimatePosition(raw_samples_1)
-    # THe sum of the absolute value of the phase-1 samples is the norm magnitude of the measurements
+    # The sum of the absolute values of transients 0 and 2 from each lane (columns 0, 2, 4, 6) is the norm magnitude of the measurements
     magnitudes = np.sum(np.abs(raw_samples_1[:, [0, 2, 4, 6]]), axis=-1)
     # The transients span +/- magnitudes for every PERIOD_SIZE_MM millimeters of motion.
     tranient_magnitude_to_mm = PERIOD_SIZE_MM / magnitudes

@@ -76,8 +76,8 @@ def reduced_target(r, n_rows):
 
 # Offset of each reduced pattern in emitter widths, matching the firmware
 # (measure-main-events.cpp mapped_readings + casm::evalPosition). Each ADC reading is
-# taken before that period's emitter update, so lane A lands in firmware phase 1 as
-# [-A3, A0, A1, A2] (shifted by -0.5) and lane B in phase 0 as [-B3, B0, B1, B2].
+# taken before that period's emitter update, so lane A lands in firmware lane index 1 as
+# [-A3, A0, A1, A2] (shifted by -0.5) and lane B in lane index 0 as [-B3, B0, B1, B2].
 # That puts A_i at i + 0.5 and B_i at i + 1 (B3 at 4 is the inverted -B3 at 0).
 LANE_OFFSET = {0: 0.5, 1: 1.0}  # lane A, lane B
 
