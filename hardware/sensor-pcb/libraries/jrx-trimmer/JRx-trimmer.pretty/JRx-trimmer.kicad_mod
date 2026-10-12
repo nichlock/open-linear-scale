@@ -1,0 +1,196 @@
+(footprint "JRx-trimmer"
+	(version 20241229)
+	(generator "pcbnew")
+	(generator_version "9.0")
+	(layer "F.Cu")
+	(descr "Capacitor trimmer.")
+	(property "Reference" "REF**"
+		(at -0.5 -3 0)
+		(unlocked yes)
+		(layer "F.SilkS")
+		(uuid "46e8d018-361b-4a35-9852-c954f8c4ff2d")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.1)
+			)
+		)
+	)
+	(property "Value" "JRx-trimmer"
+		(at 0 3 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "28532b72-64d9-4972-a313-da4c06794a5d")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Datasheet" "https://www.knowlescapacitors.com/getattachment/727ef5bd-b9cf-4698-a84c-cd891d1f5273/JR-Series"
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "465fc062-6641-4f67-af8b-c74315cc03ce")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(property "Description" "Capacitor trimmer."
+		(at 0 0 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(hide yes)
+		(uuid "429cb6e4-a529-474a-98bf-f45afa768ff5")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(attr smd)
+	(fp_line
+		(start -1.8 -1)
+		(end -1.123 -1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "4c03d878-ab3f-49b8-8f18-e828014115ef")
+	)
+	(fp_line
+		(start -1.8 1)
+		(end -1.123 1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "c9c17e77-ceb2-4e52-bcd5-1ea04cfde5aa")
+	)
+	(fp_line
+		(start 1.5 -1.677)
+		(end -1.123 -1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "3b155000-d3c9-448f-a819-ca66f21783ba")
+	)
+	(fp_line
+		(start 1.5 -1.677)
+		(end 1.5 -1)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "ef0573c2-602a-4955-9073-90167fc95830")
+	)
+	(fp_line
+		(start 1.5 1)
+		(end 1.5 1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "d6c9906a-4809-4c1e-924f-4028076f9446")
+	)
+	(fp_line
+		(start 1.5 1.677)
+		(end -1.123 1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.SilkS")
+		(uuid "d450185e-c329-40aa-8987-18bade91efc0")
+	)
+	(fp_line
+		(start -2.5 -2)
+		(end -2.5 2)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "8177aae1-831d-410c-ae09-58a630f66d77")
+	)
+	(fp_line
+		(start -2.5 2)
+		(end 2.5 2)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "5d38ed4e-d632-4aac-87a3-2ce0ca14987a")
+	)
+	(fp_line
+		(start 2.5 -2)
+		(end -2.5 -2)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "865183c3-dbcb-4789-b684-636872d80f96")
+	)
+	(fp_line
+		(start 2.5 2)
+		(end 2.5 -2)
+		(stroke
+			(width 0.05)
+			(type default)
+		)
+		(layer "F.CrtYd")
+		(uuid "b41f27ba-5e23-46b7-9c86-e062e65e14d4")
+	)
+	(fp_text user "${REFERENCE}"
+		(at 0 4.5 0)
+		(unlocked yes)
+		(layer "F.Fab")
+		(uuid "3560ef3c-a501-48af-93c7-58e039053be0")
+		(effects
+			(font
+				(size 1 1)
+				(thickness 0.15)
+			)
+		)
+	)
+	(pad "1" smd roundrect
+		(at -1.7 0 90)
+		(size 1.8 1)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(roundrect_rratio 0.15)
+		(uuid "96e31221-dcc2-475e-851f-3c2f03007574")
+	)
+	(pad "2" smd roundrect
+		(at 1.7 0 90)
+		(size 1.8 1)
+		(layers "F.Cu" "F.Mask" "F.Paste")
+		(roundrect_rratio 0.15)
+		(uuid "2c813384-67c9-48d6-92cd-92e585c01be6")
+	)
+	(embedded_fonts no)
+	(model "${KIPRJMOD}/libraries/jrx-trimmer/JR200.STEP"
+		(offset
+			(xyz 0 0 0)
+		)
+		(scale
+			(xyz 1 1 1)
+		)
+		(rotate
+			(xyz -90 -0 -0)
+		)
+	)
+)

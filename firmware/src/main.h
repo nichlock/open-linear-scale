@@ -1,23 +1,3 @@
-/* USER CODE BEGIN Header */
-/**
- ******************************************************************************
- * @file           : main.h
- * @brief          : Header for main.c file.
- *                   This file contains the common defines of the application.
- ******************************************************************************
- * @attention
- *
- * Copyright (c) 2023 STMicroelectronics.
- * All rights reserved.
- *
- * This software is licensed under terms that can be found in the LICENSE file
- * in the root directory of this software component.
- * If no LICENSE file comes with this software, it is provided AS-IS.
- *
- ******************************************************************************
- */
-/* USER CODE END Header */
-
 #ifndef __MAIN_H
 #define __MAIN_H
 
@@ -27,14 +7,7 @@
 extern "C" {
 #endif
 
-/**
- * @brief  This function is executed in case of error occurrence.
- * @retval None
- *
- * @param error_code The error code to be displayed on the LEDs. This will
- *                   directly set the timer period.
- *                   for ex: error_code=100 --> 100ms on & off time.
- */
+
 void Error_Reporter(uint32_t error_code);
 
 #include "stm32l4xx_hal.h"
