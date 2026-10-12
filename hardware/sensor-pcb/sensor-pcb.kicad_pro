@@ -86,14 +86,6 @@
         [
           "silk_over_copper|136933278|115075000|54b83395-56eb-4b68-994a-b18479452d28|00000000-0000-0000-0000-000000000000",
           ""
-        ],
-        [
-          "silk_overlap|138890000|114453181|3b8c2336-6a90-43d1-80ff-7d5ca6b1e2f2|54b83395-56eb-4b68-994a-b18479452d28",
-          ""
-        ],
-        [
-          "silk_overlap|157800000|108250000|071b6069-208c-424b-b072-8a02e74ad75b|f0ae3ef6-7f7d-485c-9f6f-ad4426eaeb0b",
-          ""
         ]
       ],
       "meta": {
@@ -631,8 +623,8 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "gerbers/",
-      "pos_files": "",
+      "plot": "",
+      "pos_files": "gerbers/",
       "specctra_dsn": "",
       "step": "sensor-pcb.step",
       "svg": "",
@@ -655,7 +647,7 @@
     },
     "bom_presets": [],
     "bom_settings": {
-      "exclude_dnp": true,
+      "exclude_dnp": false,
       "fields_ordered": [
         {
           "group_by": false,
@@ -685,7 +677,7 @@
           "group_by": true,
           "label": "DNP",
           "name": "${DNP}",
-          "show": false
+          "show": true
         },
         {
           "group_by": true,
@@ -727,6 +719,12 @@
           "group_by": false,
           "label": "Color",
           "name": "Color",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "MFPN",
+          "name": "MFPN",
           "show": false
         }
       ],

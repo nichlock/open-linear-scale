@@ -17,9 +17,10 @@
 		)
 	)
 	(property "Value" "JRx-trimmer"
-		(at 0 3 0)
+		(at 0 0 0)
 		(unlocked yes)
 		(layer "F.Fab")
+		(hide yes)
 		(uuid "28532b72-64d9-4972-a313-da4c06794a5d")
 		(effects
 			(font
@@ -155,8 +156,78 @@
 		(layer "F.CrtYd")
 		(uuid "b41f27ba-5e23-46b7-9c86-e062e65e14d4")
 	)
+	(fp_line
+		(start -1.8 -1)
+		(end -1.8 1)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "85650799-e3c9-4228-8205-1e2462fbfd25")
+	)
+	(fp_line
+		(start -1.8 -1)
+		(end -1.123 -1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "58f6b241-c9dd-41e7-815f-3537c1021843")
+	)
+	(fp_line
+		(start -1.8 1)
+		(end -1.123 1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "b75c90f2-e8db-458b-b5c0-c5cdbf9ca7e6")
+	)
+	(fp_line
+		(start 1.5 -1.677)
+		(end -1.123 -1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "6ac0f4d9-3f75-4347-9999-ab982a6d46ad")
+	)
+	(fp_line
+		(start 1.5 -1.677)
+		(end 1.5 -1)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "8ce40ff1-81af-440f-9f79-25ab5be120b4")
+	)
+	(fp_line
+		(start 1.5 -1)
+		(end 1.5 1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "bd079ce5-4ba3-4d71-a8d3-e5581b6b2b9d")
+	)
+	(fp_line
+		(start 1.5 1.677)
+		(end -1.123 1.677)
+		(stroke
+			(width 0.1)
+			(type default)
+		)
+		(layer "F.Fab")
+		(uuid "0b6d8554-df73-4dbe-811c-913e9b508b59")
+	)
 	(fp_text user "${REFERENCE}"
-		(at 0 4.5 0)
+		(at 0 0 0)
 		(unlocked yes)
 		(layer "F.Fab")
 		(uuid "3560ef3c-a501-48af-93c7-58e039053be0")

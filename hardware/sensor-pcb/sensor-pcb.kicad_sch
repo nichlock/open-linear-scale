@@ -9065,6 +9065,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "CRCW0603680KFKEA"
+			(at 27.94 180.34 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "36a1863e-933d-4aff-aae9-25f96fef0a30")
 		)
@@ -9330,6 +9339,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "CRCW060310K0FKEA"
+			(at 99.06 189.23 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "c4f8cffe-47c3-4530-a3c1-ed17fc27aa99")
 		)
@@ -9352,7 +9370,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "06374481-edad-4b2d-ac0e-bf076bb8f314")
 		(property "Reference" "R5"
 			(at 46.228 76.2 90)
@@ -9390,6 +9408,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 48.26 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW060310K0FKEA"
+			(at 48.26 76.2 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9459,6 +9486,15 @@
 			)
 		)
 		(property "Description" "test point"
+			(at 116.84 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" ""
 			(at 116.84 91.44 0)
 			(effects
 				(font
@@ -9600,6 +9636,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM188R71E105KA64D"
+			(at 134.62 33.02 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "e3ae41db-1fd9-45b2-94ff-c29bc43f133b")
 		)
@@ -9670,6 +9715,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM188R71E105KA64D"
+			(at 133.35 73.66 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "8abafd5a-8fc6-4a4d-a282-67ddc07b4942")
 		)
@@ -9693,7 +9747,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "0f911212-de95-4653-a4dc-38767e4ab0bc")
 		(property "Reference" "J4"
 			(at 20.32 72.898 0)
@@ -9732,6 +9786,15 @@
 			)
 		)
 		(property "Description" "Generic connectable mounting pin connector, single row, 01x04, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 19.05 78.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "S4B-PH-SM4-TB"
 			(at 19.05 78.74 0)
 			(effects
 				(font
@@ -9948,6 +10011,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM1885C1H222FA16D"
+			(at 119.38 172.72 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "a45e06f8-fa28-4d71-abbd-692c94d33e1d")
 		)
@@ -10036,7 +10108,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "130e57fd-c1bf-4e3d-ac8d-505655c84f4c")
 		(property "Reference" "R3"
 			(at 41.148 76.2 90)
@@ -10074,6 +10146,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 43.18 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW060310K0FKEA"
+			(at 43.18 76.2 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -10218,6 +10299,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 22.86 130.81 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "5"
 			(uuid "e710bc28-64f8-4796-a466-595a3819ab66")
 		)
@@ -10292,6 +10382,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 92.71 78.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM188R71E105KA64D"
 			(at 92.71 78.74 0)
 			(effects
 				(font
@@ -10500,6 +10599,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 207.01 167.64 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "855c8740-e5d6-4760-8104-a9366b25ae87")
 		)
@@ -10560,6 +10668,15 @@
 			)
 		)
 		(property "Description" "STMicroelectronics Arm Cortex-M4 MCU, 256KB flash, 128KB RAM, 80 MHz, 1.71-3.6V, 51 GPIO, LQFP64"
+			(at 193.04 106.68 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "STM32L476RCT6"
 			(at 193.04 106.68 0)
 			(effects
 				(font
@@ -10789,7 +10906,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SPH-002T-P0.5L"
+		(property "Value" "ASPHSPH24K102"
 			(at 112.776 156.21 0)
 			(do_not_autoplace yes)
 			(effects
@@ -10819,6 +10936,15 @@
 		)
 		(property "Description" "BOM-Only Item"
 			(at 111.76 157.988 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "ASPHSPH24K102"
+			(at 111.76 156.21 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11022,6 +11148,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM155R71C104KA55D"
+			(at 217.17 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "4d3d7b0f-da09-4e32-9b53-0e9f912ad5a1")
 		)
@@ -11057,7 +11192,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SPH-002T-P0.5L"
+		(property "Value" "ASPHSPH24K102"
 			(at 112.776 158.75 0)
 			(do_not_autoplace yes)
 			(effects
@@ -11087,6 +11222,15 @@
 		)
 		(property "Description" "BOM-Only Item"
 			(at 111.76 160.528 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "ASPHSPH24K102"
+			(at 111.76 158.75 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11290,6 +11434,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 107.95 68.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "82f88f2e-0070-4403-842e-3a2105c33cee")
 		)
@@ -11412,6 +11565,15 @@
 		)
 		(property "Description" "IC REG LINEAR 3.3V 150MA SOT-25"
 			(at 116.078 85.09 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "AP7354-33W5-7"
+			(at 111.76 67.31 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11556,6 +11718,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 63.5 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW0603510RFKEA"
 			(at 63.5 125.73 0)
 			(effects
 				(font
@@ -11762,6 +11933,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "CRCW060310K0FKEA"
+			(at 80.01 189.23 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "a03c4452-01a0-4496-a1e9-11c70fecc8ad")
 		)
@@ -11784,7 +11964,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "31910b31-c766-48b0-a31a-eed35c0fde86")
 		(property "Reference" "R14"
 			(at 76.708 67.31 90)
@@ -11822,6 +12002,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 78.74 67.31 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW060310K0FKEA"
+			(at 78.74 67.31 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -11957,6 +12146,15 @@
 			)
 		)
 		(property "Description" "Fiducial Marker"
+			(at 185.42 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" ""
 			(at 185.42 167.64 0)
 			(effects
 				(font
@@ -12227,6 +12425,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "PHR-5"
+			(at 111.76 148.59 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(instances
 			(project ""
 				(path "/e73e33d5-48b8-48dd-a5f2-44a1c8331df5"
@@ -12283,6 +12490,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 242.57 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM155R71C104KA55D"
 			(at 242.57 31.75 0)
 			(effects
 				(font
@@ -12426,6 +12642,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 105.41 27.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "902b1c0c-a638-4417-88af-42b8b0d331d6")
 		)
@@ -12559,6 +12784,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "SKRKAHE020"
+			(at 82.55 124.46 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "c9c2a30a-60ae-4f23-be38-d4f5054b4cca")
 		)
@@ -12618,6 +12852,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 106.68 195.58 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM1885G1H112FA16D"
 			(at 106.68 195.58 0)
 			(effects
 				(font
@@ -12762,6 +13005,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM21BR71C475KA73L"
+			(at 191.77 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "f91a5b10-c43f-4d7d-889e-1992a46c4cd4")
 		)
@@ -12850,7 +13102,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(fields_autoplaced yes)
 		(uuid "4c338b0d-e5d1-4cca-8653-bac0d37b2740")
 		(property "Reference" "Q1"
@@ -12889,6 +13141,15 @@
 		)
 		(property "Description" "Dual NMOS transistor, 6 pin package"
 			(at 57.15 81.28 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "BSS138BKSH"
+			(at 57.15 81.28 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13062,7 +13323,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "4e014487-1cfb-47fb-bf6d-16c8a2b23915")
 		(property "Reference" "R13"
 			(at 70.358 67.31 90)
@@ -13100,6 +13361,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 72.39 67.31 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW060310K0FKEA"
+			(at 72.39 67.31 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13375,6 +13645,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM188R71E105KA64D"
+			(at 80.01 35.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "b52d4317-597c-443e-ac58-5242d0269c42")
 		)
@@ -13511,6 +13790,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM188R71E105KA64D"
+			(at 232.41 55.88 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "4cc620e6-735c-44d9-b4fb-f3026e807aff")
 		)
@@ -13610,7 +13898,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint_Alt"
+		(property "Value" "TP_Keystone_5015"
 			(at 229.87 102.1079 0)
 			(effects
 				(font
@@ -13639,6 +13927,15 @@
 			)
 		)
 		(property "Description" "test point (alternative shape)"
+			(at 227.33 104.14 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "5015"
 			(at 227.33 104.14 0)
 			(effects
 				(font
@@ -13677,7 +13974,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint_Alt"
+		(property "Value" "TP_Keystone_5015"
 			(at 229.87 114.8079 0)
 			(effects
 				(font
@@ -13706,6 +14003,15 @@
 			)
 		)
 		(property "Description" "test point (alternative shape)"
+			(at 227.33 116.84 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "5015"
 			(at 227.33 116.84 0)
 			(effects
 				(font
@@ -13771,6 +14077,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 87.63 29.21 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW06030000Z0EA"
+			(at 87.63 29.21 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13906,6 +14221,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 229.87 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM155R71C104KA55D"
 			(at 229.87 31.75 0)
 			(effects
 				(font
@@ -14050,6 +14374,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM155R71C104KA55D"
+			(at 204.47 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "5a757bc4-a847-4b63-bd5b-53dd140f936e")
 		)
@@ -14176,6 +14509,15 @@
 		)
 		(property "Description" "Unpolarized capacitor"
 			(at 55.88 181.61 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM1555C1H1R0CA16J"
+			(at 55.88 181.61 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14450,6 +14792,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "SKRKAHE020"
+			(at 96.52 134.62 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "1e6c0ef7-bc1b-448d-91b8-70b171299cfb")
 		)
@@ -14509,6 +14860,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 96.52 121.92 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW06035K10FKEA"
 			(at 96.52 121.92 0)
 			(effects
 				(font
@@ -14785,6 +15145,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM155R71C104KA55D"
+			(at 255.27 31.75 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "1a522ef3-c8e5-4c8b-911b-d1be0aee5097")
 		)
@@ -14818,7 +15187,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint_Alt"
+		(property "Value" "TP_Keystone_5015"
 			(at 249.6821 137.16 0)
 			(effects
 				(font
@@ -14848,6 +15217,15 @@
 		)
 		(property "Description" "test point (alternative shape)"
 			(at 247.65 134.62 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "5015"
+			(at 247.65 134.62 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -14919,6 +15297,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "CRCW06035K10FKEA"
+			(at 82.55 135.89 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "052cfd27-8bff-4bdc-baeb-3e59be51d06f")
 		)
@@ -14952,7 +15339,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint_Alt"
+		(property "Value" "TP_Keystone_5015"
 			(at 130.81 185.9279 0)
 			(effects
 				(font
@@ -14981,6 +15368,15 @@
 			)
 		)
 		(property "Description" "test point (alternative shape)"
+			(at 128.27 187.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "5015"
 			(at 128.27 187.96 0)
 			(effects
 				(font
@@ -15056,6 +15452,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 73.66 27.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "20630dba-52d1-484c-8be6-0887b564196f")
 		)
@@ -15115,6 +15520,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 238.76 80.01 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM188R71E105KA64D"
 			(at 238.76 80.01 0)
 			(effects
 				(font
@@ -15184,6 +15598,15 @@
 		)
 		(property "Description" "Mounting Hole with connection"
 			(at 248.92 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" ""
+			(at 248.92 167.64 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15275,7 +15698,7 @@
 		(exclude_from_sim no)
 		(in_bom yes)
 		(on_board yes)
-		(dnp no)
+		(dnp yes)
 		(uuid "9225382d-d731-45dc-9c47-f6d7b0439b35")
 		(property "Reference" "Q1"
 			(at 66.04 78.74 90)
@@ -15313,6 +15736,15 @@
 		)
 		(property "Description" "Dual NMOS transistor, 6 pin package"
 			(at 66.04 72.39 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "BSS138BKSH"
+			(at 66.04 72.39 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15433,7 +15865,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SPH-002T-P0.5L"
+		(property "Value" "ASPHSPH24K102"
 			(at 112.776 151.13 0)
 			(do_not_autoplace yes)
 			(effects
@@ -15463,6 +15895,15 @@
 		)
 		(property "Description" "BOM-Only Item"
 			(at 111.76 152.908 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "ASPHSPH24K102"
+			(at 111.76 151.13 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -15629,7 +16070,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint_Alt"
+		(property "Value" "TP_Keystone_5015"
 			(at 74.93 185.9279 0)
 			(effects
 				(font
@@ -15658,6 +16099,15 @@
 			)
 		)
 		(property "Description" "test point (alternative shape)"
+			(at 72.39 187.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "5015"
 			(at 72.39 187.96 0)
 			(effects
 				(font
@@ -15931,6 +16381,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 116.84 45.72 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "a1f5ec7d-12a4-4bbf-a11e-12595cd66e9d")
 		)
@@ -15990,6 +16449,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 243.84 55.88 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM188R71E105KA64D"
 			(at 243.84 55.88 0)
 			(effects
 				(font
@@ -16264,6 +16732,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "JR030"
+			(at 55.88 175.26 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "fda40508-bae1-42ac-a5b4-d8d499e82e67")
 		)
@@ -16334,6 +16811,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 128.27 27.94 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "d647ea86-fde0-47a4-ad72-b89a85a891fc")
 		)
@@ -16391,6 +16877,15 @@
 			)
 		)
 		(property "Description" "Generic connectable mounting pin connector, single row, 01x05, script generated (kicad-library-utils/schlib/autogen/connector/)"
+			(at 115.57 129.54 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "S5B-PH-SM4-TB"
 			(at 115.57 129.54 0)
 			(effects
 				(font
@@ -16473,6 +16968,15 @@
 			)
 		)
 		(property "Description" "Fiducial Marker"
+			(at 172.72 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" ""
 			(at 172.72 167.64 0)
 			(effects
 				(font
@@ -16673,6 +17177,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "CRCW0603100MJPEAHR"
+			(at 55.88 168.91 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "177ae4ee-3a03-47b2-9a0b-ecee128d2f7c")
 		)
@@ -16735,6 +17248,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 100.33 35.56 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM188R71E105KA64D"
 			(at 100.33 35.56 0)
 			(effects
 				(font
@@ -16876,6 +17398,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "CRCW060310K0FKEA"
+			(at 242.57 134.62 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "df299965-b0d8-4b76-ace0-3f457fb5b417")
 		)
@@ -16911,7 +17442,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SPH-002T-P0.5L"
+		(property "Value" "ASPHSPH24K102"
 			(at 112.776 153.67 0)
 			(do_not_autoplace yes)
 			(effects
@@ -16941,6 +17472,15 @@
 		)
 		(property "Description" "BOM-Only Item"
 			(at 111.76 155.448 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "ASPHSPH24K102"
+			(at 111.76 153.67 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17004,6 +17544,15 @@
 			)
 		)
 		(property "Description" "Fiducial Marker"
+			(at 160.02 167.64 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" ""
 			(at 160.02 167.64 0)
 			(effects
 				(font
@@ -17105,7 +17654,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "APTD3216LSURCK"
+		(property "Value" "APT3216LSECK/J3-PRV"
 			(at 67.31 138.7474 90)
 			(effects
 				(font
@@ -17157,6 +17706,15 @@
 				(font
 					(size 1.27 1.27)
 				)
+			)
+		)
+		(property "MFPN" "APT3216LSECK/J3-PRV"
+			(at 63.5 135.89 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
 			)
 		)
 		(pin "2"
@@ -17229,6 +17787,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 232.41 76.2 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "daad1ff6-c282-48d7-a8d5-d1cf0f787d66")
 		)
@@ -17288,6 +17855,15 @@
 			)
 		)
 		(property "Description" "Resistor"
+			(at 46.99 125.73 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW0603510RFKEA"
 			(at 46.99 125.73 0)
 			(effects
 				(font
@@ -17494,6 +18070,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "CRCW06030000Z0EA"
+			(at 139.7 69.85 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "952dde10-6aab-421f-af06-02bb918327a3")
 		)
@@ -17527,7 +18112,7 @@
 				(justify left)
 			)
 		)
-		(property "Value" "TestPoint_Alt"
+		(property "Value" "TP_Keystone_5015"
 			(at 249.6821 140.97 0)
 			(effects
 				(font
@@ -17557,6 +18142,15 @@
 		)
 		(property "Description" "test point (alternative shape)"
 			(at 247.65 138.43 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "5015"
+			(at 247.65 138.43 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17596,7 +18190,7 @@
 				(justify right)
 			)
 		)
-		(property "Value" "SPH-002T-P0.5L"
+		(property "Value" "ASPHSPH24K102"
 			(at 112.776 161.29 0)
 			(do_not_autoplace yes)
 			(effects
@@ -17626,6 +18220,15 @@
 		)
 		(property "Description" "BOM-Only Item"
 			(at 111.76 163.068 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "ASPHSPH24K102"
+			(at 111.76 161.29 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -17892,6 +18495,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "AP7354-33W5-7"
+			(at 111.76 26.67 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "8dbbb115-5f50-42c3-856d-0fd438c2b2cb")
 		)
@@ -17969,6 +18581,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 234.95 167.64 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "a081ba58-b7a9-4e1a-8e6f-2da1002017d5")
 		)
@@ -18026,6 +18647,15 @@
 		)
 		(property "Description" "Resistor"
 			(at 97.79 72.39 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "CRCW06030000Z0EA"
+			(at 97.79 72.39 90)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -18095,6 +18725,15 @@
 			)
 		)
 		(property "Description" "test point"
+			(at 143.51 69.85 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" ""
 			(at 143.51 69.85 0)
 			(effects
 				(font
@@ -18253,6 +18892,15 @@
 				)
 			)
 		)
+		(property "MFPN" "APT3216LZGCK"
+			(at 46.99 135.89 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "2"
 			(uuid "a0a067b7-8bae-4b35-8746-8b789db68fcf")
 		)
@@ -18315,6 +18963,15 @@
 			)
 		)
 		(property "Description" "Unpolarized capacitor"
+			(at 255.27 55.88 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" "GCM155R71C104KA55D"
 			(at 255.27 55.88 0)
 			(effects
 				(font
@@ -18459,6 +19116,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" "GCM188R71E105KA64D"
+			(at 102.87 78.74 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "c4bb0d8f-96a1-4442-9d1e-6b6a0b2b145d")
 		)
@@ -18527,6 +19193,15 @@
 				(hide yes)
 			)
 		)
+		(property "MFPN" ""
+			(at 220.98 167.64 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
 		(pin "1"
 			(uuid "a2188fea-40be-4e45-b331-f7252a5a8ae1")
 		)
@@ -18586,6 +19261,15 @@
 			)
 		)
 		(property "Description" "test point"
+			(at 38.1 187.96 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "MFPN" ""
 			(at 38.1 187.96 0)
 			(effects
 				(font
