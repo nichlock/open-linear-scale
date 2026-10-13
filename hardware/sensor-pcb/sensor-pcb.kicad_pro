@@ -626,7 +626,7 @@
       "plot": "",
       "pos_files": "gerbers/",
       "specctra_dsn": "",
-      "step": "sensor-pcb.step",
+      "step": "sensor-pcb-with-copper.step",
       "svg": "",
       "vrml": ""
     },

@@ -231,7 +231,7 @@ An **anti-alias filter** follows the integrator. It removes the above-Nyquist el
 
 The firmware measures the change from one integrator state to the next, so the integrator never needs a reset.
 
-The [hardware README](hardware/README.md#analog-frontend) covers the design rationale, VREF and the trimmer setup in more detail.
+The [hardware README](hardware/README.md#sensor-analog-frontend-design-details) covers the design in more detail with rationale.
 
 # Mechanical Integration
 

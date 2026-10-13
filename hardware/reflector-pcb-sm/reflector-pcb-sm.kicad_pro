@@ -490,7 +490,7 @@
       "plot": "gerbers/",
       "pos_files": "",
       "specctra_dsn": "",
-      "step": "sensor-pcb.step",
+      "step": "reflector-pcb-sm-with-copper.step",
       "svg": "",
       "vrml": ""
     },

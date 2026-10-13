@@ -38,6 +38,43 @@
       "type": "pcb_export_3d"
     },
     {
+      "description": "Export STEP file with copper",
+      "id": "672e1a2e-93b8-4053-9134-25b58a19860b",
+      "settings": {
+        "board_only": false,
+        "board_outlines_chaining_epsilon": 0.01,
+        "cut_vias_in_body": false,
+        "description": "",
+        "export_board_body": true,
+        "export_components": true,
+        "export_inner_copper": false,
+        "export_pads": true,
+        "export_silkscreen": false,
+        "export_soldermask": false,
+        "export_tracks": true,
+        "export_zones": true,
+        "fill_all_vias": false,
+        "format": "step",
+        "fuse_shapes": false,
+        "include_dnp": true,
+        "include_unspecified": true,
+        "occt_format": 0,
+        "optimize_step": true,
+        "output_filename": "reflector-pcb-sm-with-copper.step",
+        "overwrite": false,
+        "subst_models": true,
+        "use_defined_origin": false,
+        "use_drill_origin": true,
+        "use_grid_origin": false,
+        "use_pcb_center_origin": false,
+        "user_origin.x": 67.591,
+        "user_origin.y": 94.6025,
+        "vrml_model_dir": "",
+        "vrml_relative_paths": false
+      },
+      "type": "pcb_export_3d"
+    },
+    {
       "description": "",
       "id": "2850493d-8827-4d0c-b068-58f9ec5a3c0b",
       "settings": {
@@ -152,8 +189,7 @@
       "id": "3f92f3a7-8f84-4252-bac5-44ede44e52fe",
       "only": [
         "c84fdec5-e714-47e6-8ff3-345d8fabf90c",
-        "29119a49-479b-43c3-8e19-8eb99bd1288d",
-        "f5f08631-d45d-4fd7-8787-0542a3e3e464"
+        "672e1a2e-93b8-4053-9134-25b58a19860b"
       ],
       "settings": {
         "output_path": "exports"

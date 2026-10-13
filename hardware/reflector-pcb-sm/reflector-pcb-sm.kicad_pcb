@@ -4378,14 +4378,14 @@
 		(layer "Dwgs.User")
 		(uuid "a65131bb-69ce-4f70-b5d8-3cd2511d748d")
 		(pts
-			(xy 38 100) (xy 138 100.127)
+			(xy 38 100) (xy 79.91 100)
 		)
 		(height 6.858)
 		(orientation 0)
 		(format
 			(prefix "")
 			(suffix "")
-			(units 2)
+			(units 1)
 			(units_format 1)
 			(precision 4)
 			(suppress_zeroes yes)
@@ -4399,8 +4399,8 @@
 			(extension_offset 0.5)
 			(keep_text_aligned yes)
 		)
-		(gr_text "100 mm"
-			(at 42.69899 105.715 0)
+		(gr_text "1650 mils"
+			(at 42.698999 105.7785 0)
 			(layer "Dwgs.User")
 			(uuid "a65131bb-69ce-4f70-b5d8-3cd2511d748d")
 			(effects
