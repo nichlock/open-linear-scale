@@ -8,7 +8,7 @@ extern "C" {
 #endif
 
 
-void Error_Reporter(uint32_t error_code);
+void Error_Reporter(void);
 
 #include "stm32l4xx_hal.h"
 
@@ -29,7 +29,7 @@ void Error_Reporter(uint32_t error_code);
 /* Exported functions prototypes ---------------------------------------------*/
 
 static inline void Error_Handler(void) {
-  Error_Reporter(100);
+  Error_Reporter();
 }
 
 // From stm32l4xx_hal_msp.h

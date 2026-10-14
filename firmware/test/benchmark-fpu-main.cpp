@@ -12,8 +12,7 @@
 
 static const uint32_t ITERATIONS = 10000;
 
-void Error_Reporter(uint32_t error_code) {
-  (void)error_code;
+void Error_Reporter(void) {
   while (1) {
     __WFI();
   }

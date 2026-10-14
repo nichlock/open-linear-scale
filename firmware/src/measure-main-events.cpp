@@ -178,7 +178,7 @@ typedef enum {
   ERRFLAG_UNKOWN_ALGO             = 1ul << 4,
   ERRFLAG_EMITTER_DMA             = 1ul << 5,   // Transfer error on the emitter DMA channel
   ERRFLAG_ADC_DMA                 = 1ul << 6,   // Transfer error on the ADC DMA channel
-  // ERRFLAG_RESERVED                = 1ul << 7,
+  ERRFLAG_BURST_CONFIG            = 1ul << 7,   // BURST_COUNT is larger than the burst buffer
   // ERRFLAG_RESERVED                = 1ul << 8,
   // ERRFLAG_RESERVED                = 1ul << 9,
   // ERRFLAG_RESERVED                = 1ul << 10,
@@ -370,13 +370,13 @@ void stopBackgroundSampling(void) {
   }
 }
 
-bool isSampleRunning() {
+bool isSampleStopped() {
   return registers[SENSOR_STATE] == STATE_STOPPED;
 }
 
 bool writeRegisterChecked(uint32_t idx, uint32_t value) {
   if (idx >= REG_COUNT) return false;
-  uint32_t required_perm = isSampleRunning() ? P_WP : P_WR;
+  uint32_t required_perm = isSampleStopped() ? P_WP : P_WR;
 
   if (idx == SENSOR_STATE && value >= _STATE_BARRIER) {
     return false;
@@ -604,6 +604,11 @@ ErrorStatus configureSampleFrontend() {
     return ErrorStatus::ERROR;
   }
 
+  if (registers[BURST_COUNT] > BURST_BUFFER_ALLOC) {
+    error(ERRFLAG_BURST_CONFIG);
+    return ErrorStatus::ERROR;
+  }
+
   // Configure sequence timer clock
   registers[SEQUENCE_TIMER_FREQ] = HAL_RCC_GetPCLK1Freq() * 2;
 
@@ -656,7 +661,8 @@ ErrorStatus configureSampleFrontend() {
   float total_adc_sample_time = adc_window_s * num_oversamples;
   registers[TRUE_ADC_OVERSAMPLE_TIME_NS] = uint32_t(total_adc_sample_time * 1e9);
 
-  if (bits <= 0) {
+  // The ADC supports oversample ratios of 2x (bits = 1) to 256x (bits = 8)
+  if (bits <= 0 || bits > 8) {
     error(ERRFLAG_BAD_SEQUENCE_TIMING);
     return ErrorStatus::ERROR;
   }
@@ -749,7 +755,7 @@ int main(void) {
 
   // Slow UART lines to minimum slew
   // GPIOA->OSPEEDR &= ~0xF0ul; // USART2
-  GPIOC->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR10 | GPIO_OSPEEDER_OSPEEDR11);  // USART1
+  GPIOC->OSPEEDR &= ~(GPIO_OSPEEDER_OSPEEDR10 | GPIO_OSPEEDER_OSPEEDR11);  // USART3
 
   // setPrintfUart(huart2);
   // setPrintfUart(uart);
@@ -1262,28 +1268,22 @@ static void MX_TIM5_Init(void) {
   }
 }
 
-void Error_Reporter(uint32_t error_code) {
-  __disable_irq();
+void Error_Reporter(void) {
+  // Blink the status LED (PB13) to indicate an error.
+  // Interrupts are left enabled: HAL_Delay relies on the SysTick interrupt.
+  __HAL_RCC_GPIOB_CLK_ENABLE();
 
-  RCC->AHB2ENR |= 0xFF;  // Enables ALL gpio clocks
+  GPIO_InitTypeDef gpio = {0};
+  gpio.Pin = GPIO_PIN_13;
+  gpio.Mode = GPIO_MODE_OUTPUT_PP;
+  gpio.Pull = GPIO_NOPULL;
+  gpio.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &gpio);
 
-  // Drive emitter #0 on and off to indicate an error
-  GPIOC->MODER |= 0x1ul << (14 * 2);
-  GPIOC->MODER &= ~0x2ul << (14 * 2);
-  GPIOC->OTYPER &= ~0x1ul << 14;
-
-  // Very basic delay requiring no peripherals other than GPIO
-
-  // F_CPU/1600000 --> ~1ms delay (tested experimentally on the following empty 'for' loops)
-  const uint32_t count = (F_CPU / 1600000) * error_code;
-
+  // 500ms on, 500ms off.
   while (1) {
-    GPIOC->BSRR |= 0x1ul << 14;
-    for (volatile uint32_t i = 0; i < count; i++) {
-    }
-    GPIOC->BSRR |= (0x1ul << 16) << 14;
-    for (volatile uint32_t i = 0; i < count; i++) {
-    }
+    HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
+    HAL_Delay(100);
   }
 }
 
