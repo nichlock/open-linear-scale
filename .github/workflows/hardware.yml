@@ -3,7 +3,7 @@
 # - Every push and pull request: ERC/DRC must pass, and a schematic change must
 #   come with an updated schematic PDF in the same push or pull request.
 # - Push to main: all outputs are regenerated from each board's
-#   exports.kicad_jobset and published to a rolling "latest" pre-release.
+#   exports.kicad_jobset and published to a rolling, untested "development" pre-release.
 # - Tag v*: the same outputs are attached to that version's release.
 
 name: Hardware
@@ -139,15 +139,15 @@ jobs:
           path: dist/
           retention-days: 14
 
-  publish-latest:
-    name: Publish "latest" pre-release
+  publish-development:
+    name: Publish "development" pre-release
     needs: [build, schematic-pdf]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
       contents: write
     concurrency:
-      group: publish-latest
+      group: publish-development
       cancel-in-progress: true
     steps:
       - uses: actions/download-artifact@v4
@@ -155,17 +155,24 @@ jobs:
           name: hardware-outputs
           path: dist
 
-      - name: Replace the latest pre-release
+      - name: Replace the development pre-release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          gh release delete latest --cleanup-tag --yes || true
-          gh release create latest dist/* \
+          cat > notes.md <<EOF
+          > [!WARNING]
+          > **Untested development build.** These files are generated automatically from the latest commit on \`main\` and have not been built or tested as hardware. They may contain unverified or unfinished changes. Don't order boards from them unless you're prepared for that; use a versioned release instead.
+
+          Generated from commit ${GITHUB_SHA} by the [Hardware workflow](${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}).
+          EOF
+          gh release delete development --cleanup-tag --yes || true
+          gh release create development dist/* \
             --prerelease \
+            --latest=false \
             --target "$GITHUB_SHA" \
-            --title "Latest build (main)" \
-            --notes "Hardware outputs generated automatically from commit $GITHUB_SHA on main. These are not a versioned release; use a tagged release for a fixed revision."
+            --title "Development build (untested)" \
+            --notes-file notes.md
 
   publish-release:
     name: Attach outputs to tagged release

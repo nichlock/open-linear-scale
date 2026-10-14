@@ -383,6 +383,17 @@
         "output_path": "exports/assembly.zip"
       },
       "type": "archive"
+    },
+    {
+      "description": "Committed Files",
+      "id": "1cef5f5e-72f7-448f-8df0-732b2b7a6d1a",
+      "only": [
+        "f5f08631-d45d-4fd7-8787-0542a3e3e464"
+      ],
+      "settings": {
+        "output_path": "."
+      },
+      "type": "folder"
     }
   ]
 }
