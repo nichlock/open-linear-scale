@@ -2,8 +2,7 @@
 
 TODO: improve photos and pick one
 
-![TODO alt text](docs/header-no-bg-removed.png)
-![TODO alt text](docs/header-bg-removed.png)
+![Header image of the sensor and reflector PCB](docs/header-no-bg.png)
 
 # Overview
 
