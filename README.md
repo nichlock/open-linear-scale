@@ -1,7 +1,5 @@
 # An Open Source Incremental Linear Encoder
 
-TODO: improve photos and pick one
-
 ![Header image of the sensor and reflector PCB](docs/header-no-bg.png)
 
 # Overview
@@ -13,7 +11,7 @@ TODO: improve photos and pick one
 | Accuracy     | 40µm (1.6 thou)* |
 | Output Type  | UART (todo SSI)  |
 
-*At a constant room temperature. This figure is a little conservative compared to the electrical precision and resolution. See [Practical Accuracy Measurements](#practical-accuracy-measurements) for a summary of the measured error.
+*At a constant room temperature. This value is a little conservative compared to the electrical precision and resolution. See [Practical Accuracy Measurements](#practical-accuracy-measurements) for a summary of the measured error.
 
 ## Quickstart
 
@@ -87,10 +85,10 @@ I moved the sensor 9mm in 0.1mm steps using my 3D printer. The steps weren't per
 
 ![Four Layer Sensor Error](docs/4-layer-sensor-error-median-filtered.png)
 
-The error has two parts: noise (blue) and averaged error (black).
+The error has two parts: noise (blue) and systematic error (black).
 
-- **Averaged error** is dominated by a periodic error that correlates with position (the large triangular deviations around 1–3mm and 7–9mm). There is also a smaller error that repeats every emitter (0.635mm), and drift that most likely comes from my 3D printed test assembly.
-- **Noise** is smaller than the averaged error. It is mostly white noise, plus a low-frequency resonance of my 3D printer and occasional jumps caused by asymmetric emitter "strengths".
+- **Systematic error** is dominated by a periodic error that correlates with position (the large triangular deviations around 1–3mm and 7–9mm). There is also a smaller error that repeats every emitter (0.635mm), and drift that most likely comes from my 3D printed test assembly.
+- **Noise** is smaller than the systematic error. It is mostly white noise, plus a low-frequency resonance of my 3D printer and occasional jumps caused by asymmetric emitter "strengths".
 
 I read the accuracy figure visually from the plots and rounded it conservatively. My mechanical setup and algorithms have too much uncertainty to quote exact numbers. The [tests README](tests/README.md#accuracy-analysis) has the full analysis, including noise PSDs and an Allan deviation.
 

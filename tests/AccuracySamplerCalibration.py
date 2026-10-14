@@ -9,8 +9,8 @@ from pathlib import Path
 
 import serial
 
-READER_SCRIPT = Path(__file__).parent / "ImpulseReader.py"
-# Printed by ImpulseReader once the header is found and sample data starts.
+READER_SCRIPT = Path(__file__).parent / "BurstReader.py"
+# Printed by BurstReader once the header is found and sample data starts.
 READER_SAMPLING_MARKER = "Reading samples..."
 
 ABS_Z_MIN = 0
