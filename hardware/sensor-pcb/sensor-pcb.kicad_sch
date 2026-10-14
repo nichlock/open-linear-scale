@@ -5763,6 +5763,16 @@
 	)
 	(wire
 		(pts
+			(xy 113.03 91.44) (xy 113.03 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "23e3fed4-baf1-42e5-8daf-8df0da663feb")
+	)
+	(wire
+		(pts
 			(xy 107.95 34.29) (xy 107.95 29.21)
 		)
 		(stroke
@@ -6105,7 +6115,7 @@
 	)
 	(wire
 		(pts
-			(xy 116.84 92.71) (xy 116.84 91.44)
+			(xy 123.19 92.71) (xy 123.19 91.44)
 		)
 		(stroke
 			(width 0)
@@ -6132,6 +6142,16 @@
 			(type default)
 		)
 		(uuid "4a30edc4-00db-4309-8be3-ae10960e3e50")
+	)
+	(wire
+		(pts
+			(xy 111.76 92.71) (xy 113.03 92.71)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "4ac54585-d159-4d07-844c-8139c9e62a98")
 	)
 	(polyline
 		(pts
@@ -9441,7 +9461,7 @@
 	)
 	(symbol
 		(lib_id "Connector:TestPoint")
-		(at 116.84 91.44 0)
+		(at 123.19 91.44 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom no)
@@ -9449,7 +9469,7 @@
 		(dnp no)
 		(uuid "0aa71009-9127-4c17-bb7c-c8876c8beed9")
 		(property "Reference" "TP13"
-			(at 118.4663 86.106 0)
+			(at 124.8163 86.106 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9458,7 +9478,7 @@
 			)
 		)
 		(property "Value" "TestPoint"
-			(at 114.3 86.8681 0)
+			(at 120.65 86.8681 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9468,7 +9488,7 @@
 			)
 		)
 		(property "Footprint" "TestPoint:TestPoint_Pad_D1.0mm"
-			(at 121.92 91.44 0)
+			(at 128.27 91.44 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9477,7 +9497,7 @@
 			)
 		)
 		(property "Datasheet" "~"
-			(at 121.92 91.44 0)
+			(at 128.27 91.44 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9486,7 +9506,7 @@
 			)
 		)
 		(property "Description" "test point"
-			(at 116.84 91.44 0)
+			(at 123.19 91.44 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -9495,7 +9515,7 @@
 			)
 		)
 		(property "MFPN" ""
-			(at 116.84 91.44 0)
+			(at 123.19 91.44 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12524,7 +12544,7 @@
 	)
 	(symbol
 		(lib_id "power:GND")
-		(at 116.84 92.71 0)
+		(at 123.19 92.71 0)
 		(unit 1)
 		(exclude_from_sim no)
 		(in_bom yes)
@@ -12532,7 +12552,7 @@
 		(dnp no)
 		(uuid "39993d51-1e9d-4545-a327-12604f2a4151")
 		(property "Reference" "#PWR055"
-			(at 116.84 99.06 0)
+			(at 123.19 99.06 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12541,7 +12561,7 @@
 			)
 		)
 		(property "Value" "GND"
-			(at 116.84 96.266 0)
+			(at 123.19 96.266 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12549,7 +12569,7 @@
 			)
 		)
 		(property "Footprint" ""
-			(at 116.84 92.71 0)
+			(at 123.19 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12558,7 +12578,7 @@
 			)
 		)
 		(property "Datasheet" ""
-			(at 116.84 92.71 0)
+			(at 123.19 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -12567,7 +12587,7 @@
 			)
 		)
 		(property "Description" "Power symbol creates a global label with name \"GND\" , ground"
-			(at 116.84 92.71 0)
+			(at 123.19 92.71 0)
 			(effects
 				(font
 					(size 1.27 1.27)
@@ -13519,6 +13539,73 @@
 			(project "sensor-pcb"
 				(path "/e73e33d5-48b8-48dd-a5f2-44a1c8331df5"
 					(reference "#PWR018")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:PWR_FLAG")
+		(at 111.76 92.71 90)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "57c5b04e-ae79-4e67-9a46-a2a074eb9699")
+		(property "Reference" "#FLG05"
+			(at 109.855 92.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "PWR_FLAG"
+			(at 107.95 92.7099 90)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+		)
+		(property "Footprint" ""
+			(at 111.76 92.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" "~"
+			(at 111.76 92.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Special symbol for telling ERC where power comes from"
+			(at 111.76 92.71 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "f0a617e5-0eda-4d68-8bd5-26e5a3cf2780")
+		)
+		(instances
+			(project "sensor-pcb"
+				(path "/e73e33d5-48b8-48dd-a5f2-44a1c8331df5"
+					(reference "#FLG05")
 					(unit 1)
 				)
 			)
@@ -18673,6 +18760,72 @@
 			(project "sensor-pcb"
 				(path "/e73e33d5-48b8-48dd-a5f2-44a1c8331df5"
 					(reference "R16")
+					(unit 1)
+				)
+			)
+		)
+	)
+	(symbol
+		(lib_id "power:VBUS")
+		(at 113.03 91.44 0)
+		(unit 1)
+		(exclude_from_sim no)
+		(in_bom yes)
+		(on_board yes)
+		(dnp no)
+		(fields_autoplaced yes)
+		(uuid "f0a2abfa-224e-4372-bcee-950bf5b3859f")
+		(property "Reference" "#PWR062"
+			(at 113.03 95.25 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Value" "VBUSA"
+			(at 113.03 86.36 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+			)
+		)
+		(property "Footprint" ""
+			(at 113.03 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Datasheet" ""
+			(at 113.03 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(property "Description" "Power symbol creates a global label with name \"VBUS\""
+			(at 113.03 91.44 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(hide yes)
+			)
+		)
+		(pin "1"
+			(uuid "74c6da64-d6ca-48ba-842c-51f37e56873b")
+		)
+		(instances
+			(project "sensor-pcb"
+				(path "/e73e33d5-48b8-48dd-a5f2-44a1c8331df5"
+					(reference "#PWR062")
 					(unit 1)
 				)
 			)

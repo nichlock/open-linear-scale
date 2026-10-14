@@ -1,0 +1,193 @@
+# Hardware CI: rule checks, output generation and publishing for the KiCad boards.
+#
+# - Every push and pull request: ERC/DRC must pass, and a schematic change must
+#   come with an updated schematic PDF in the same push or pull request.
+# - Push to main: all outputs are regenerated from each board's
+#   exports.kicad_jobset and published to a rolling "latest" pre-release.
+# - Tag v*: the same outputs are attached to that version's release.
+
+name: Hardware
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+    paths:
+      - "hardware/**"
+      - ".github/workflows/hardware.yml"
+  workflow_dispatch:
+
+env:
+  # Boards are built from hardware/<board>/<board>.kicad_pro and exports.kicad_jobset.
+  BOARDS: sensor-pcb reflector-pcb-sm
+  # Boards with a schematic; their PDF lives at hardware/<board>/<board>.pdf.
+  SCHEMATIC_BOARDS: sensor-pcb
+
+jobs:
+  checks:
+    name: ERC / DRC
+    runs-on: ubuntu-latest
+    container:
+      image: kicad/kicad:9.0
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run ERC and DRC
+        shell: bash
+        run: |
+          mkdir -p reports
+          status=0
+          for b in $BOARDS; do
+            dir="hardware/$b"
+            parity=""
+            if [ -f "$dir/$b.kicad_sch" ]; then
+              parity="--schematic-parity"
+              echo "::group::ERC $b"
+              kicad-cli sch erc --severity-error --exit-code-violations \
+                -o "reports/$b-erc.rpt" "$dir/$b.kicad_sch" || { status=1; echo "::error::ERC failed for $b"; }
+              cat "reports/$b-erc.rpt"
+              echo "::endgroup::"
+            fi
+            echo "::group::DRC $b"
+            kicad-cli pcb drc $parity --severity-error --exit-code-violations \
+              -o "reports/$b-drc.rpt" "$dir/$b.kicad_pcb" || { status=1; echo "::error::DRC failed for $b"; }
+            cat "reports/$b-drc.rpt"
+            echo "::endgroup::"
+          done
+          exit $status
+
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: erc-drc-reports
+          path: reports/
+          retention-days: 14
+
+  schematic-pdf:
+    name: Schematic PDF is updated
+    if: github.ref_type != 'tag'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check that schematic changes include a new PDF
+        shell: bash
+        env:
+          BASE_PR: ${{ github.event.pull_request.base.sha }}
+          BASE_PUSH: ${{ github.event.before }}
+        run: |
+          base="${BASE_PR:-$BASE_PUSH}"
+          if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ] \
+             || ! git cat-file -e "$base^{commit}" 2>/dev/null; then
+            echo "No base commit to compare against; skipping."
+            exit 0
+          fi
+          changed="$(git diff --name-only "$base" HEAD)"
+          status=0
+          for b in $SCHEMATIC_BOARDS; do
+            pdf="hardware/$b/$b.pdf"
+            if grep -qE "^hardware/$b/.*\.kicad_sch$" <<< "$changed" && ! grep -qxF "$pdf" <<< "$changed"; then
+              echo "::error file=$pdf::The $b schematic changed but $pdf was not regenerated."
+              status=1
+            fi
+          done
+          exit $status
+
+  build:
+    name: Generate outputs
+    needs: checks
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    container:
+      image: kicad/kicad:9.0
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run jobsets
+        shell: bash
+        run: |
+          for b in $BOARDS; do
+            echo "::group::$b"
+            (cd "hardware/$b" && kicad-cli jobset run --stop-on-error -f exports.kicad_jobset "$b.kicad_pro")
+            echo "::endgroup::"
+          done
+
+      - name: Collect release files
+        shell: bash
+        run: |
+          # Release assets share one flat namespace, so prefix each file with its board name.
+          mkdir -p dist
+          for b in $BOARDS; do
+            for f in "hardware/$b/exports"/*; do
+              [ -f "$f" ] || continue  # skip the jobset's loose output folders; the zips already contain them
+              name="$(basename "$f")"
+              case "$name" in "$b"*) ;; *) name="$b-$name" ;; esac
+              cp "$f" "dist/$name"
+            done
+          done
+          ls -l dist
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hardware-outputs
+          path: dist/
+          retention-days: 14
+
+  publish-latest:
+    name: Publish "latest" pre-release
+    needs: [build, schematic-pdf]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: publish-latest
+      cancel-in-progress: true
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: hardware-outputs
+          path: dist
+
+      - name: Replace the latest pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh release delete latest --cleanup-tag --yes || true
+          gh release create latest dist/* \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Latest build (main)" \
+            --notes "Hardware outputs generated automatically from commit $GITHUB_SHA on main. These are not a versioned release; use a tagged release for a fixed revision."
+
+  publish-release:
+    name: Attach outputs to tagged release
+    needs: build
+    if: github.ref_type == 'tag'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: hardware-outputs
+          path: dist
+
+      - name: Create or update the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" dist/* --clobber
+          else
+            gh release create "$TAG" dist/* --verify-tag --generate-notes --title "$TAG"
+          fi
