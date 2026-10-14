@@ -11,7 +11,7 @@ There are three focuses in my scripts:
    2. `BurstAnalysis.py` will read back and help analyze one single burst of data.
 3. Calibration Data
    1. `AccuracySamplerAuto.py` will move a Prusa 3D printer and then read back one full burst of the sensor. This helps to understand the accuracy of the sensor, although it relies a lot on the 3D printer, which is not very accurate at this scale.
-   2. `AccuracySamplerCalibration.py` is the evolution of the above. It will move the 3D printer then read back one sensor burst and a Mitutoyo device. This works in conjunction with an arduino board running the `spc-firmware`.
+   2. `AccuracySamplerCalibration.py` is the evolution of the above. It will move the 3D printer then read back one sensor burst and a Mitutoyo device. This works in conjunction with an arduino board running the `spc-firmware` - I used a NUCLEO-F446RE, others will work with the C code, though.
    3. `AccuracyAnalysis.py` is the script to analyze the many bursts captured in a calibration sweep.
 
 My work on this project so far has not been focused on creating formal host software, so these scripts are provided as-is. 

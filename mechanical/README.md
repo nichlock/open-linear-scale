@@ -88,7 +88,7 @@ Before starting, wire up your sensor. You can always buy the SPC connector; I ch
 11. Get the Nucleo ready (or wire up using the manufacturer's data cable).
 12. Wire up the Nucleo. See the [SPC firmware README](../tests/spc-firmware/README.md) for the wiring.
 
-### Details
+### Design Details
 
 The "calibration" fixture is currently the only one I trust enough to publish. It's designed to sit on the build plate of a Prusa MK4S 3D printer, which acts as a motorized linear stage for sampling lots of positions.
 

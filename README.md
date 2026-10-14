@@ -9,18 +9,18 @@
 | Encoder Type | Incremental      |
 | Method       | Capacitive       |
 | Accuracy     | 40µm (1.6 thou)* |
-| Output Type  | UART (todo SSI)  |
+| Output Type  | UART             |
 
 *At a constant room temperature. This value is a little conservative compared to the electrical precision and resolution. See [Practical Accuracy Measurements](#practical-accuracy-measurements) for a summary of the measured error.
 
 ## Quickstart
 
 1. Order the 4-layer sensor and the reflector ([hardware](hardware/README.md)).
-2. Assemble.
+2. [Assemble](mechanical/README.md#bom-and-assembly-instructions).
 3. Flash the [firmware](firmware/README.md#building-and-flashing).
 4. Apply Kapton for the [0.1mm gap](#mechanical-integration).
 5. Set the [trimmer](hardware/README.md#trimmer).
-6. Run `LiveView.py` ([tests](tests/README.md)).
+6. Configure the ports in `LiveView.py` and run it. ([tests](tests/README.md)).
 
 ## Why Make This
 
@@ -98,7 +98,11 @@ The encoder has two key pieces: the sensor and the reflector.
 
 ## Sensor PCB
 
-TODO: annotated picture of top and bottom
+| PCB Bottom                                                                         | PCB Top                                                                                    |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| <img src="docs/sensor-pcb-bot-noted.png" width="300" alt="Bottom of a sensor PCB"> | <img src="docs/assembled-sensor-top.jpg" width="300" alt="Top of an assembled sensor PCB"> |
+
+
 
 The sensor is built around an STM32L4, a microcontroller with many built-in analog peripherals.
 
@@ -108,11 +112,11 @@ The sensor PCB can be fabricated as a 2-layer board. In practice, though, the sh
 
 ## Reflector PCB
 
+<img src="docs/reflector-pcb.jpg" width="650" alt="Top of the reflector PCB">
+
 The reflector has a row of T-shaped copper pads. They "reflect" the capacitance of four of the eight repeating emitters into the RX antenna.
 
 The reflector can be as long as you can afford. I have only tested a 50mm reflector, for convenience and because I can only measure high accuracy over short distances. To make it longer, repeat the existing pattern of T's and space-filling rectangles in the PCB design.
-
-TODO: annotated picture
 
 ## Measurement Cycle
 
@@ -225,7 +229,7 @@ The RX antenna receives a voltage pulse. Its height depends on the capacitive co
 
 You can sample that pulse directly with the ADC, but only for low accuracy. It needs very short sample windows and can't be anti-alias filtered well, so it picks up a lot of noise.
 
-Instead, the RX antenna feeds a **charge integrator**. The ratio of its two capacitors sets its gain, and one of them is a trimmer for adjustment. The integrator turns the short pulse into a held step. The ADC can then oversample over a long window, which improves SNR.
+Instead, the RX antenna feeds a **charge integrator**. The ratio of its two capacitors sets its gain. The integrator turns the short pulse into a held step. The ADC can then oversample over a long window, which improves SNR.
 
 An **anti-alias filter** follows the integrator. It removes the above-Nyquist electrical noise that the integrator passes through.
 
@@ -253,10 +257,10 @@ The [mechanical README](mechanical/README.md) covers a typical mechanical stacku
 
 This project uses two licenses:
 
-| Folders                      | License                                     |
-| ---------------------------- | ------------------------------------------- |
-| `hardware/`, `mechanical/`   | [CERN-OHL-P-2.0](LICENSE-CERN-OHL-P)        |
-| `firmware/`, `tests/`, `docs/` | [MIT](LICENSE-MIT)                        |
+| Folders                        | License                              |
+| ------------------------------ | ------------------------------------ |
+| `hardware/`, `mechanical/`     | [CERN-OHL-P-2.0](LICENSE-CERN-OHL-P) |
+| `firmware/`, `tests/`, `docs/` | [MIT](LICENSE-MIT)                   |
 
 Both are permissive. You can use, modify, make and sell the designs and code, including commercially, as long as you keep the copyright and license notices.
 
