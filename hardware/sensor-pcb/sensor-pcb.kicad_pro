@@ -725,7 +725,7 @@
           "group_by": false,
           "label": "MFPN",
           "name": "MFPN",
-          "show": false
+          "show": true
         }
       ],
       "filter_string": "",

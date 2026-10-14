@@ -16784,7 +16784,7 @@
 				)
 			)
 		)
-		(property "Value" "JR030"
+		(property "Value" "JR200"
 			(at 56.134 171.958 90)
 			(effects
 				(font
@@ -16819,7 +16819,7 @@
 				(hide yes)
 			)
 		)
-		(property "MFPN" "JR030"
+		(property "MFPN" "JR200"
 			(at 55.88 175.26 90)
 			(effects
 				(font

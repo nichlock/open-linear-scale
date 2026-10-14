@@ -12595,7 +12595,7 @@
 				)
 			)
 		)
-		(property "Value" "JR030"
+		(property "Value" "JR200"
 			(at 0 3 270)
 			(unlocked yes)
 			(layer "F.Fab")
@@ -12634,7 +12634,7 @@
 				)
 			)
 		)
-		(property "MFPN" "JR030"
+		(property "MFPN" "JR200"
 			(at 0 0 270)
 			(unlocked yes)
 			(layer "F.Fab")
