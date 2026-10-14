@@ -125,10 +125,13 @@ const uint8_t P_WR = 0x4;
   X(READING_F                    , 0                                     , P_RD)    \
   X(ERROR_VALUE                  , 0                                     , P_RD | P_WP | P_WR) \
   X(SENSOR_STATE                 , STATE_START_CONTINUOUS                , P_RD | P_WP | P_WR) \
-  X(CONVERSION_FACTOR            , bit_cast_f2i(1.0f)                        , P_RD | P_WP | P_WR) \
+  /* default unit is mm */ \
+  X(CONVERSION_FACTOR            , bit_cast_f2i(0.635f)                  , P_RD | P_WP | P_WR) \
+  /* float, added to the tare offset then reset to 0 on the next measurement */ \
+  X(SENSOR_TARE                  , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
   X(SENSOR_INPUT                 , INPUT_FILTER                          , P_RD | P_WP) \
-  X(SENSOR_OUTPUT                , OUTPUT_FLOATING_HEX                       , P_RD | P_WP) \
+  X(SENSOR_OUTPUT                , OUTPUT_FLOATING_TEXT                   , P_RD | P_WP) \
   X(SENSOR_ALGORITHM             , ALGO_SLIDING_WINDOW                   , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
   X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
@@ -781,8 +784,9 @@ int main(void) {
   HAL_Delay(100);
 
   algo::fixedpos_t incremental_position = 0, prv_inc_pos = 0, absolute_position = 0;
-  algo::fixedpos_t scaled_position = 0;
-  algo::fixedpos_t tare_position = 0;
+  algo::fixedpos_t tared_position = 0;
+  // Accumulated tare, in unscaled position units
+  algo::fixedpos_t tare_offset = 0;
   // algo::fixedpos_t absolute_position_filtered = 0;
 
   algo::adcreading_t readings[algo::EMITTER_STATE_COUNT] = {0};
@@ -901,13 +905,22 @@ int main(void) {
 
     incremental_position = algo::evalPosition(mapped_readings);
     algo::updatePosition(incremental_position, prv_inc_pos, absolute_position);
-    scaled_position = absolute_position * bit_cast_i2f(registers[CONVERSION_FACTOR]);
+    float conversion_factor = bit_cast_i2f(registers[CONVERSION_FACTOR]);
+
+    // Pull any pending tare. It is consumed here so each write applies once.
+    if (registers[SENSOR_TARE] != 0) {
+      tare_offset += bit_cast_i2f(registers[SENSOR_TARE]) / conversion_factor;
+      registers[SENSOR_TARE] = 0;
+    }
+    tared_position = (absolute_position - tare_offset) * conversion_factor;
+
+    registers[READING_F] = bit_cast_f2i(tared_position);
 
     if (registers[SENSOR_OUTPUT] == OUTPUT_FLOATING_TEXT) {
-      Uart::cprintf("%f\n", scaled_position);
+      Uart::cprintf("%f\n", tared_position);
 
     } else if (registers[SENSOR_OUTPUT] == OUTPUT_FLOATING_HEX) {
-      Uart::cprintf("%08" PRIx32 "\n", bit_cast_f2i(scaled_position));
+      Uart::cprintf("%08" PRIx32 "\n", bit_cast_f2i(tared_position));
 
     } else if ((registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_DIFF) || (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_RAW)) {
       for (size_t i = 0; i < 4; i++) {
