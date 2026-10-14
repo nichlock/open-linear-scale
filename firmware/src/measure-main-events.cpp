@@ -2,7 +2,8 @@
 #include <stm32l4xx_hal.h>
 #include <string.h>  // memcpy
 
-#include <cstring>  // std::memcpy used for float-to-bits conversion in register space
+#include <cinttypes>  // PRIx32
+#include <cstring>    // std::memcpy used for float-to-bits conversion in register space
 
 #include "main.h"
 #include "registers.hpp"
@@ -72,13 +73,28 @@ AdcInputPin adc_input_options[ADC_INPUT_COUNT] = {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+// Register Helpers
+uint32_t bit_cast_f2i(float x) {
+  uint32_t ret = 0;
+  std::memcpy(&ret, &x, sizeof(ret));
+  return ret;
+}
+
+float bit_cast_i2f(uint32_t x) {
+  float ret = 0;
+  std::memcpy(&ret, &x, sizeof(ret));
+  return ret;
+}
+
+///////////////////////////////////////////////////////////////////////////////
 // Register space
 
 enum SampleOutputTypes : uint8_t {
-  OUTPUT_POSITION = 0,    // not implemented
-  OUTPUT_DBG_BURST_RAW,   // Take no differences
-  OUTPUT_DBG_BURST_DIFF,  // Take the diff and cancel out opposite emitters
-  OUTPUT_DBG_NONE,        // Run sensor without outputting for electrical measurements
+  OUTPUT_FLOATING_TEXT = 0,  // Plaintext position (1.23\n)
+  OUTPUT_FLOATING_HEX,       // Position as the binary float data in hex formatting (1234abcd)
+  OUTPUT_DBG_BURST_RAW,      // Take no differences
+  OUTPUT_DBG_BURST_DIFF,     // Take the diff and cancel out opposite emitters
+  OUTPUT_DBG_NONE,           // Run sensor without outputting for electrical measurements
 };
 
 enum StateMachine : uint8_t {
@@ -109,10 +125,10 @@ const uint8_t P_WR = 0x4;
   X(READING_F                    , 0                                     , P_RD)    \
   X(ERROR_VALUE                  , 0                                     , P_RD | P_WP | P_WR) \
   X(SENSOR_STATE                 , STATE_START_CONTINUOUS                , P_RD | P_WP | P_WR) \
-  X(CONVERSION_FACTOR            , 0                                     , P_RD | P_WP | P_WR) \
+  X(CONVERSION_FACTOR            , bit_cast_f2i(1.0f)                        , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
   X(SENSOR_INPUT                 , INPUT_FILTER                          , P_RD | P_WP) \
-  X(SENSOR_OUTPUT                , OUTPUT_DBG_BURST_DIFF                 , P_RD | P_WP) \
+  X(SENSOR_OUTPUT                , OUTPUT_FLOATING_HEX                       , P_RD | P_WP) \
   X(SENSOR_ALGORITHM             , ALGO_SLIDING_WINDOW                   , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
   X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
@@ -147,12 +163,6 @@ uint32_t permissions[REG_COUNT] = {
     REGISTER_LIST(X)
 #undef X
 };
-
-uint32_t bit_cast(float x) {
-  uint32_t ret = 0;
-  std::memcpy(&ret, &x, sizeof(ret));
-  return ret;
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Misclaneous
@@ -203,11 +213,11 @@ TIM_TypeDef* tim_s = TIM2;
 // Emitter pinouts
 
 /// The emitter pinout; emitter zero on pin emitter_pins[0], one on emitter_pins[1], etc...
-const static uint32_t emitter_pins[casm::EMITTER_COUNT] = {13, 14, 15, 9, 8, 7, 6, 2};
+const static uint32_t emitter_pins[algo::EMITTER_COUNT] = {13, 14, 15, 9, 8, 7, 6, 2};
 /// The emitter port. All emitters are on one port by design.
 #define emitter_GPIOx GPIOC
 
-uint32_t emitter_state_gpio_bsrr[casm::EMITTER_STATE_COUNT] = {0};
+uint32_t emitter_state_gpio_bsrr[algo::EMITTER_STATE_COUNT] = {0};
 
 ///////////////////////////////////////////////////////////////////////////////
 // Sample config
@@ -221,20 +231,18 @@ uint32_t emitter_state_gpio_bsrr[casm::EMITTER_STATE_COUNT] = {0};
 // There is also a **Transient**: This is a logical-only value. It represents the
 // oversampled values after some cancellations/transforms are performed.
 
-typedef int32_t adcreading_t;
-
-adcreading_t readings_unsafe[casm::EMITTER_STATE_COUNT + 1] = {0};
-adcreading_t readings_shared[casm::EMITTER_STATE_COUNT] = {0};
+algo::adcreading_t readings_unsafe[algo::EMITTER_STATE_COUNT + 1] = {0};
+algo::adcreading_t readings_shared[algo::EMITTER_STATE_COUNT] = {0};
 
 #define BURST_BUFFER_ALLOC (2048)
-adcreading_t burst_buf[BURST_BUFFER_ALLOC][casm::EMITTER_STATE_COUNT / 2] = {0};
+algo::adcreading_t burst_buf[BURST_BUFFER_ALLOC][algo::EMITTER_STATE_COUNT / 2] = {0};
 size_t burst_iterator = 0;
 
 typedef uint32_t smplidx_t;
 smplidx_t readings_sequence = 0;
 smplidx_t tx_step = 0;
 
-const static adcreading_t STACK_SMASH_MAGIC_VAL = 0xAAAAAAAAul;
+const static algo::adcreading_t STACK_SMASH_MAGIC_VAL = 0xAAAAAAAAul;
 
 extern "C" {
 void ADC1_2_IRQHandler(void) {
@@ -272,7 +280,7 @@ void DMA1_Channel1_IRQHandler(void) {
   }
 
   DMA1_Channel1->CCR &= ~DMA_CCR_EN;
-  DMA1_Channel1->CNDTR = casm::EMITTER_STATE_COUNT;
+  DMA1_Channel1->CNDTR = algo::EMITTER_STATE_COUNT;
   DMA1_Channel1->CCR |= DMA_CCR_EN;
   LL_DMA_ClearFlag_GI1(DMA1);
 
@@ -294,10 +302,10 @@ void startBackgroundSampling(void) {
 
   tim_s->CNT = 0;
 
-  DMA1_Channel1->CNDTR = casm::EMITTER_STATE_COUNT;
+  DMA1_Channel1->CNDTR = algo::EMITTER_STATE_COUNT;
 
   // Restart the emitter table from state 0, even after a mid-sequence stop
-  DMA1_Channel2->CNDTR = casm::EMITTER_STATE_COUNT;
+  DMA1_Channel2->CNDTR = algo::EMITTER_STATE_COUNT;
 
   __disable_irq();
   HAL_NVIC_EnableIRQ(ADC1_2_IRQn);
@@ -398,7 +406,7 @@ smplidx_t waitForCurrentSequenceEnd() {
   return readings_sequence;
 }
 
-void safePullReadings(adcreading_t destination[16]) {
+void safePullReadings(algo::adcreading_t destination[16]) {
   smplidx_t seq_before, seq_after;
   do {
     NVIC_DisableIRQ(DMA1_Channel1_IRQn);
@@ -422,11 +430,11 @@ void error(ErrorFlag error_type) {
  */
 ErrorStatus generateEmitterStateDataWrites(void) {
   if (registers[SENSOR_ALGORITHM] == ALGO_SLIDING_WINDOW) {
-    for (size_t state = 0; state < casm::EMITTER_STATE_COUNT; state++) {
+    for (size_t state = 0; state < algo::EMITTER_STATE_COUNT; state++) {
       uint32_t set = 0;
       uint32_t res = 0;
-      for (size_t bit = 0; bit < casm::EMITTER_COUNT; bit++) {
-        if ((1ul << bit) & casm::emitter_states[state])
+      for (size_t bit = 0; bit < algo::EMITTER_COUNT; bit++) {
+        if ((1ul << bit) & algo::emitter_states[state])
           set |= 1ul << emitter_pins[bit];
         else
           res |= 1ul << emitter_pins[bit];
@@ -435,7 +443,7 @@ ErrorStatus generateEmitterStateDataWrites(void) {
       emitter_state_gpio_bsrr[state] = (res << 16) | (set);
     }  // for (state)
   } else if (registers[SENSOR_ALGORITHM] == ALGO_DBG_IND_EMITTERS) {
-    for (size_t state = 0; state < casm::EMITTER_STATE_COUNT; state++) {
+    for (size_t state = 0; state < algo::EMITTER_STATE_COUNT; state++) {
       uint32_t gpio = 1 << emitter_pins[(state >> 1)];
       if (state & 1ul) {
         emitter_state_gpio_bsrr[state] = (gpio << 16);
@@ -463,7 +471,7 @@ void initializeEmitterPins(void) {
   uint32_t new_ospeed_msk = 0;
   uint32_t new_ospeed_set = 0;
 
-  for (size_t bit = 0; bit < casm::EMITTER_COUNT; bit++) {
+  for (size_t bit = 0; bit < algo::EMITTER_COUNT; bit++) {
     new_moder_msk |= GPIO_MODER_MODE0_Msk << (2 * emitter_pins[bit]);
     new_moder_set |= GPIO_MODE_OUTPUT_PP << (2 * emitter_pins[bit]);
 
@@ -597,7 +605,7 @@ ErrorStatus configureSampleFrontend() {
   registers[SEQUENCE_TIMER_FREQ] = HAL_RCC_GetPCLK1Freq() * 2;
 
   float tim_clk = registers[SEQUENCE_TIMER_FREQ];
-  uint32_t target_tim_arr = ((registers[SEQUENCE_TIME_US] * tim_clk) / 1e6) / casm::EMITTER_STATE_COUNT;
+  uint32_t target_tim_arr = ((registers[SEQUENCE_TIME_US] * tim_clk) / 1e6) / algo::EMITTER_STATE_COUNT;
 
   // An arbitrary maximum of 1s is imposed here.
   // 100us is a guess at where things will start to break down. TODO: validate it.
@@ -623,7 +631,7 @@ ErrorStatus configureSampleFrontend() {
     return ErrorStatus::ERROR;
   }
 
-  float conversion_period = float(registers[SEQUENCE_TIME_US]) / (float(casm::EMITTER_STATE_COUNT) * 1e6);
+  float conversion_period = float(registers[SEQUENCE_TIME_US]) / (float(algo::EMITTER_STATE_COUNT) * 1e6);
 
   registers[TRUE_OVERSAMPLE_CYCLE_NS] = int32_t(conversion_period * 1e9);
   registers[TRUE_ADC_CONVERSION_NS] = int32_t(adc_window_s * 1e9);
@@ -675,7 +683,7 @@ ErrorStatus configureSampleFrontend() {
   }
 
   DMA1_Channel1->CMAR = (uint32_t)readings_unsafe;
-  DMA1_Channel1->CNDTR = casm::EMITTER_STATE_COUNT;
+  DMA1_Channel1->CNDTR = algo::EMITTER_STATE_COUNT;
 
   uint32_t ovsr = (bits - 1) & 0x7ul;
   uint32_t ovss = (bits >= 4) ? (bits - 4) : 0;
@@ -724,7 +732,7 @@ int main(void) {
   // Reset of all peripherals, Initializes the Flash interface and the Systick.
   HAL_Init();
 
-  readings_unsafe[casm::EMITTER_STATE_COUNT] = STACK_SMASH_MAGIC_VAL;
+  readings_unsafe[algo::EMITTER_STATE_COUNT] = STACK_SMASH_MAGIC_VAL;
 
   // Configure the system clock
   SystemClock_Config();
@@ -772,18 +780,18 @@ int main(void) {
   // Allow analog circuits to settle
   HAL_Delay(100);
 
-  // casm::fixedpos_t incremental_position, prv_inc_pos, absolute_position;
-  // casm::fixedpos_t scaled_position, tare_position = 0;
-  // casm::fixedpos_t absolute_position_filtered;
-  // unit_mode_t unit_mode = UNIT_MM;
+  algo::fixedpos_t incremental_position = 0, prv_inc_pos = 0, absolute_position = 0;
+  algo::fixedpos_t scaled_position = 0;
+  algo::fixedpos_t tare_position = 0;
+  // algo::fixedpos_t absolute_position_filtered = 0;
 
-  adcreading_t readings[casm::EMITTER_STATE_COUNT] = {0};
-  adcreading_t mapped_readings[casm::EMITTER_PERIOD][2];
+  algo::adcreading_t readings[algo::EMITTER_STATE_COUNT] = {0};
+  algo::adcreading_t mapped_readings[algo::EMITTER_PERIOD][2];
 
   // Assume that the voltage has settled since boot
   // This could be replaced with an ADC read, but the first cycle data should
   // be discarded anyway.
-  adcreading_t final_oversample = 1ul << 15;
+  algo::adcreading_t final_oversample = 1ul << 15;
 
   smplidx_t prev_seq_num = 0, new_seq_num = 0;
 
@@ -823,10 +831,10 @@ int main(void) {
 
     // This is mostly historical now that DMA is used, but it can be good
     // for catching misconfigured DMA.
-    if (readings_unsafe[casm::EMITTER_STATE_COUNT] != STACK_SMASH_MAGIC_VAL) {
-      Uart::cprintf("Stack smashing detected (%x)\n", readings_unsafe[casm::EMITTER_STATE_COUNT]);
+    if (readings_unsafe[algo::EMITTER_STATE_COUNT] != STACK_SMASH_MAGIC_VAL) {
+      Uart::cprintf("Stack smashing detected (%x)\n", readings_unsafe[algo::EMITTER_STATE_COUNT]);
       error(ERRFLAG_DMA_STACK_SMASH);
-      readings_unsafe[casm::EMITTER_STATE_COUNT] = STACK_SMASH_MAGIC_VAL;
+      readings_unsafe[algo::EMITTER_STATE_COUNT] = STACK_SMASH_MAGIC_VAL;
     }
 
     new_seq_num = waitForCurrentSequenceEnd();
@@ -843,7 +851,9 @@ int main(void) {
     // checking for dropped sequence cycles.
     safePullReadings(readings);
 
-    if (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_DIFF) {
+    if (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_DIFF ||
+        registers[SENSOR_OUTPUT] == OUTPUT_FLOATING_TEXT ||
+        registers[SENSOR_OUTPUT] == OUTPUT_FLOATING_HEX) {
     // Remap emitter readings based on the order of inputs.
     // There are two characteristics to consider.
     // 1) readings[i] = -readings[i+8], so they are combined to make a larger signal
@@ -889,10 +899,17 @@ int main(void) {
       }
     }
 
-    // incremental_position = casm::evalPosition(mapped_readings);
-    // casm::updatePosition(incremental_position, prv_inc_pos, absolute_position);
+    incremental_position = algo::evalPosition(mapped_readings);
+    algo::updatePosition(incremental_position, prv_inc_pos, absolute_position);
+    scaled_position = absolute_position * bit_cast_i2f(registers[CONVERSION_FACTOR]);
 
-    if ((registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_DIFF) || (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_RAW)) {
+    if (registers[SENSOR_OUTPUT] == OUTPUT_FLOATING_TEXT) {
+      Uart::cprintf("%f\n", scaled_position);
+
+    } else if (registers[SENSOR_OUTPUT] == OUTPUT_FLOATING_HEX) {
+      Uart::cprintf("%08" PRIx32 "\n", bit_cast_f2i(scaled_position));
+
+    } else if ((registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_DIFF) || (registers[SENSOR_OUTPUT] == OUTPUT_DBG_BURST_RAW)) {
       for (size_t i = 0; i < 4; i++) {
         for (size_t j = 0; j < 2; j++)
           burst_buf[burst_iterator][i + (4 * j)] = mapped_readings[i][j];
@@ -904,7 +921,7 @@ int main(void) {
 
         stopBackgroundSampling();
 
-        Uart::cprintf("Sequence Rate: %d ticks at %d Hz\n", tim_s->ARR * casm::EMITTER_STATE_COUNT, (uint32_t)registers[SEQUENCE_TIMER_FREQ]);
+        Uart::cprintf("Sequence Rate: %d ticks at %d Hz\n", tim_s->ARR * algo::EMITTER_STATE_COUNT, (uint32_t)registers[SEQUENCE_TIMER_FREQ]);
 
         // Discard the first sequence. Useful if there is a period of
         // down-time since the last sequence.
@@ -940,7 +957,7 @@ int main(void) {
     }
 
     // // Double-precision floating-point is required for IIR filters
-    // // absolute_position_filtered = casm::fixedpos_t(filter.filter(absolute_position.toDouble()));
+    // // absolute_position_filtered = algo::fixedpos_t(filter.filter(absolute_position.toDouble()));
 
     // // Moving average filter is fine with fixed-point
     // absolute_position_filtered = filter.filter(absolute_position);

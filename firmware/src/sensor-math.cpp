@@ -1,6 +1,8 @@
 #include "sensor-math.hpp"
 
-casm::fixedpos_t casm::evalPosition(rawtrans_t readings[EMITTER_PERIOD][2]) {
+#include <tgmath.h>
+
+algo::fixedpos_t algo::evalPosition(adcreading_t readings[EMITTER_PERIOD][2]) {
   uint8_t lane, i;
   uint8_t first_sign;
   int8_t transition_idx;
@@ -52,7 +54,7 @@ casm::fixedpos_t casm::evalPosition(rawtrans_t readings[EMITTER_PERIOD][2]) {
   // }
 
   dist = zeros[0] - zeros[1];
-  if (fixedabs(dist) > 3.75) {
+  if (fabs(dist) > 3.75) {
     // Lanes disagree (one lane has overflowed but the other hasn't).
     // Averaging would choose a midpoint (ie. we'd get '2' when we're actually at 4 (=0)).
     // We'll just pick one and run with it.
@@ -63,30 +65,30 @@ casm::fixedpos_t casm::evalPosition(rawtrans_t readings[EMITTER_PERIOD][2]) {
   return (zeros[0] + zeros[1]) / 2;
 }
 
-// casm::fixedtrans_t casm::updatePosition(casm::fixedtrans_t prev_abs_pos, casm::fixedtrans_t incremental_pos) {
+// algo::fixedtrans_t algo::updatePosition(algo::fixedtrans_t prev_abs_pos, algo::fixedtrans_t incremental_pos) {
 
 // new_pos --> new, incremental
 // prev_pos_recieved --> old, incremental
 // current_full_position --> position to update
-void casm::updatePosition(casm::fixedtrans_t new_pos,
-                          casm::fixedtrans_t& prev_pos_recieved,
-                          casm::fixedtrans_t& current_full_position) {
-  static casm::fixedpos_t distance;
+void algo::updatePosition(algo::fixedtrans_t new_pos,
+                          algo::fixedtrans_t& prev_pos_recieved,
+                          algo::fixedtrans_t& current_full_position) {
+  static algo::fixedpos_t distance;
 
   distance = new_pos - prev_pos_recieved;  // Inverted to flip the positive movement direction
 
   // If the magnitude of the distance is near the max possible magnitude, we've
   // moved to a new period. Handle this by going up or down by the distance we
   // actually moved
-  if (casm::fixedabs(distance) > casm::EMITTER_PERIOD - 1) {
+  if (fabs(distance) > algo::EMITTER_PERIOD - 1) {
     if (distance < 0) {
       // Periodic value jumped from 0 to max, so we went backwards across periods
-      current_full_position += (casm::fixedpos_t(casm::EMITTER_PERIOD) + distance);
+      current_full_position += (algo::fixedpos_t(algo::EMITTER_PERIOD) + distance);
     } else {
-      current_full_position -= (casm::fixedpos_t(casm::EMITTER_PERIOD) - distance);
+      current_full_position -= (algo::fixedpos_t(algo::EMITTER_PERIOD) - distance);
     }
   } else {
     current_full_position += distance;
   }
   prev_pos_recieved = new_pos;
-}
+}

@@ -56,7 +56,7 @@ The emitter states are `emitter_states` in [`sensor-math.hpp`](src/sensor-math.h
 
 The main loop turns the 16 oversamples into `mapped_readings[4][2]`, two lanes of four transients. The comment above that mapping in [`measure-main-events.cpp`](src/measure-main-events.cpp) explains the cancellations.
 
-`casm::evalPosition()` and `casm::updatePosition()` in [`sensor-math.cpp`](src/sensor-math.cpp) turn the lanes into a position. `updatePosition()` treats any jump of more than 3 (out of a period of 4) as a wrap, so the sensor must move less than a quarter of a period per sequence.
+`algo::evalPosition()` and `algo::updatePosition()` in [`sensor-math.cpp`](src/sensor-math.cpp) turn the lanes into a position. `updatePosition()` treats any jump of more than 3 (out of a period of 4) as a wrap, so the sensor must move less than a quarter of a period per sequence.
 
 # UART Interface
 

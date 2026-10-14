@@ -1,5 +1,6 @@
 import argparse
 import queue
+import struct
 import sys
 import threading
 import time
@@ -17,7 +18,6 @@ from AccuracyAnalysis import estimatePosition, NUM_EMITTERS, PERIOD_SIZE_MM
 HISTORY_SECONDS = 10.0
 MAX_CONSECUTIVE_BAD_ROWS = 50
 REDRAW_INTERVAL_SECONDS = 0.05
-FIXED_POINT_FRACT_BITS = 16
 
 DEBUG_LOG_INPUT = True
 DEBUG_LOG_FILENAME = "liveview_debug.log"
@@ -66,13 +66,14 @@ def parse_known_mode(raw,  mode):
         lane1 = [readings[4], readings[5], readings[6], readings[7]]
         return position * (PERIOD_SIZE_MM / NUM_EMITTERS), lane0, lane1, True
 
+    # Firmware sends the IEEE-754 bit pattern of a 32-bit float as 8 hex digits
+    if len(raw) != 8:
+        return float("nan"), None, None, False
     try:
-        raw_int = int(raw, 16)
+        position = struct.unpack(">f", bytes.fromhex(raw))[0]
     except ValueError:
         return float("nan"), None, None, False
-    if raw_int >= 0x80000000:
-        raw_int -= 0x100000000
-    return raw_int / (1 << FIXED_POINT_FRACT_BITS), None, None, True
+    return position, None, None, True
 
 
 def detect_mode(raw):
