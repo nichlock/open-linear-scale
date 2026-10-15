@@ -9,7 +9,7 @@ This folder holds designs for the mechanical test fixturing. Currently, it only 
 
 # Mechanical Stackup
 
-A typical mechanical stackup is shown below.
+A typical mechanical stackup is shown below. If you're developing mechanical installations, you will also want to see the [integration drawing](pcb-alignment-drawing.pdf).
 
 | Color      | Purpose                                                                         |
 | ---------- | ------------------------------------------------------------------------------- |
@@ -73,24 +73,26 @@ This is a rough BOM in an attempt to capture the somewhat patched-together desig
 | Reflector Mount                               | 1   | 6    |
 | Tape for printer bed                          | 1   | 10   |
 | SPC cable or wires                            | 1   | 11   |
-| STM32 Nucleo (or other UNO-style Dev Board)   | 1   | 11   |
+| STM32 Nucleo (NUCLEO-F446RE)                  | 1   | 11   |
 
 These assembly instructions align with the photos in `assembly-photos`.
 
-Before starting, wire up your sensor. You can always buy the SPC connector; I chose to save $100 and wire it myself. You should find the wiring for your sensor in your user manual since they can differ. See photo `mitutoyo-wiring.jpg`.
+Before starting, wire up your sensor. You can always buy the SPC connector; I chose to save $100 and wire it myself. You should find the wiring for your sensor in your user manual since they can differ. See [`mitutoyo-wiring.jpg`](calibration-prusa/assembly-photos/mitutoyo-wiring.jpg).
 
-1. Press-fit the pins into the frame. Install the indicator using the Indicator Clamp, 16mm screws, and four washers.
-2. Place the Tape for Shimming on the Sensor PCB and cut out the holes. Place the sensor PCB on to the Frame by inserting into the pins. It should fit snugly.
-3. Install the Slider housing using the rest of the washers and the 12mm screws. Place double-sided tape where the end of the aluminum foil will go (left side in the picture) and cut and install the foil.
-4. Ground the aluminum foil. For this particular design revision and assembly, you'll just have to wire the shield directly to any PCB ground.
-5. Insert the Reflector PCB. The top of the T aligns with the sensor PCB's receiving pad.
+1. Press-fit the pins into the frame. Install the indicator using the Indicator Clamp, 16mm screws, and four washers. ([photo 1](calibration-prusa/assembly-photos/1-cal-prusa-unassembled.jpg))
+2. Place the Tape for Shimming on the Sensor PCB and cut out the holes. Place the sensor PCB on to the Frame by inserting into the pins. It should fit snugly. ([photo 2](calibration-prusa/assembly-photos/2-cal-prusa-pcb-with-kapton.jpg))
+3. Install the Slider housing using the rest of the washers and the 12mm screws. Place double-sided tape where the end of the aluminum foil will go (left side in the picture) and cut and install the foil. ([photo 3](calibration-prusa/assembly-photos/3-cal-prusa-with-housing.jpg))
+4. Ground the aluminum foil. For this particular design revision and assembly, you'll just have to wire the shield directly to any PCB ground. ([photo 4](calibration-prusa/assembly-photos/4-cal-prusa-with-housing-shield-closeup.jpg))
+5. Insert the Reflector PCB. The top of the T aligns with the sensor PCB's receiving pad. ([photo 5a](calibration-prusa/assembly-photos/5a-cal-prusa-with-reflector.jpg), [photo 5b](calibration-prusa/assembly-photos/5b-cal-prusa-reflector-far-away.jpg))
 6. No photo; press the four remaining pins into the Reflector Mount.
-7. Home the 3D printer. Then, snap the reflector mount on to the 3D printer's x-rails. Set the Z-height so that the reflector-mount pins are close to (but slightly below) perfect alignment with the reflector PCB.
-8. Push the reflector PCB slightly down and push the assemblies together.
-9. Make sure the bottom is mated well.
-10. Tape the assembly to the 3D printer build plate. This tape does not need to be perfect since it doesn't directly affect accuracy. It exists to prevent slipping out.
-11. Get the Nucleo ready (or wire up using the manufacturer's data cable).
+7. Home the 3D printer. Then, snap the reflector mount on to the 3D printer's x-rails. Set the Z-height so that the reflector-mount pins are close to (but slightly below) perfect alignment with the reflector PCB. ([photo 7](calibration-prusa/assembly-photos/7-cal-prusa-reflector-mount-alignment.jpg))
+8. Push the reflector PCB slightly down and push the assemblies together. ([photo 8](calibration-prusa/assembly-photos/8-cal-prusa-reflector-mount-installed.jpg))
+9. Make sure the bottom is mated well. ([photo 9](calibration-prusa/assembly-photos/9-cal-prusa-reflector-pins-bottom.jpg))
+10. Tape the assembly to the 3D printer build plate. This tape does not need to be perfect since it doesn't directly affect accuracy. It exists to prevent slipping out. ([photo 10](calibration-prusa/assembly-photos/10-cal-prusa-assembled.jpg))
+11. Get the Nucleo ready (or wire up using the manufacturer's data cable). ([photo 12](calibration-prusa/assembly-photos/12-cal-prusa-nucleo.jpg))
 12. Wire up the Nucleo. See the [SPC firmware README](../tests/spc-firmware/README.md) for the wiring.
+
+The finished assembly is shown in [photo 11](calibration-prusa/assembly-photos/11-cal-prusa-assembled-with-nucleo.jpg).
 
 ### Design Details
 
@@ -98,7 +100,7 @@ The "calibration" fixture is currently the only one I trust enough to publish. I
 
 A Mitutoyo indicator is mounted to this to run the [accuracy/calibration tests](../tests/README.md#accuracy-analysis).
 
-The reflector mount is designed to only take pins. The reflector is never screwed in, even though there are hles meant for screws. The pins are sufficient to hold it well enough in my testing. Pin-only makes the assembly much easier to instal and remove from the printer. 
+The reflector mount is designed to only take pins. The reflector is never screwed in, even though there are holes meant for screws. The pins are sufficient to hold it well enough in my testing. Pin-only makes the assembly much easier to install and remove from the printer. 
 
 The reflector mount snaps into place on the Prusa MK4S X-axis rails.
 

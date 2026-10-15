@@ -123,6 +123,7 @@ def capture(sensor_port, output_dir, sample_index, position):
 
 
 def main():
+    print("WARNING: This script will not set the device into burst mode, if a UART timeout happens change the mode manually.")
     args = parse_args()
     output_dir, start, end, stepsize, cycles, rehome = prompt_test_parameters()
 

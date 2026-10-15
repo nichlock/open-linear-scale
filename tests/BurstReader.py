@@ -89,6 +89,7 @@ def read_samples(ser):
 
 
 def main():
+    print("WARNING: This script will not set the device into burst mode, if a UART timeout happens change the mode manually.")
     args = parse_args()
     output = args.output or datetime.datetime.now().strftime("impulse_data/%Y-%m-%d_%H-%M-%S.json")
 

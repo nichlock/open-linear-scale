@@ -217,6 +217,7 @@ def capture(sensor_port, gauge, output_dir, gauge_dir, sample_index, position):
 
 
 def main():
+    print("WARNING: This script will not set the device into burst mode, if a UART timeout happens change the mode manually.")
     args = parse_args()
     output_dir, start, end, stepsize, rehome = prompt_test_parameters()
     # Kept beside output_dir rather than inside it, since AccuracyAnalysis

@@ -17,10 +17,9 @@ Thanks for your interest in this project! It started as a personal learning proj
 
 ## Guidelines
 
-- **Mechanical parts:** include the source CAD (STEP, and the native file if you have one) along with any STLs.
-- **Firmware** is a PlatformIO project. Make sure the `release` environment builds before you send a pull request.
-- **PCB designs** use KiCad 9. Please keep schematic and layout changes in the same pull request, and note any footprint or BOM changes.
-- **Images:** please keep photos small in size (about 1600px on the long side) before committing them.
+- **Mechanical parts:** Include the source CAD (STEP, and the native file if you have one) along with any STLs.
+- **Firmware:** This is a PlatformIO project. Make sure the `release` environment builds before you send a pull request.
+- **PCB designs:** Use KiCad 9. Please keep schematic and layout changes in the same pull request, and note any footprint or BOM changes.
 
 ## License
 

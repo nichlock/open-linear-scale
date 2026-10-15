@@ -131,7 +131,7 @@ const uint8_t P_WR = 0x4;
   X(SENSOR_TARE                  , 0                                     , P_RD | P_WP | P_WR) \
   /* Sample configuration, can only happen while a sample is not running */ \
   X(SENSOR_INPUT                 , INPUT_FILTER                          , P_RD | P_WP) \
-  X(SENSOR_OUTPUT                , OUTPUT_FLOATING_TEXT                   , P_RD | P_WP) \
+  X(SENSOR_OUTPUT                , OUTPUT_FLOATING_HEX                   , P_RD | P_WP) \
   X(SENSOR_ALGORITHM             , ALGO_SLIDING_WINDOW                   , P_RD | P_WP) \
   X(SEQUENCE_TIME_US             , 1000                                  , P_RD | P_WP) \
   X(TX_RX_DELAY_US               , 38                                    , P_RD | P_WP) \
@@ -1280,7 +1280,6 @@ void Error_Reporter(void) {
   gpio.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &gpio);
 
-  // 500ms on, 500ms off.
   while (1) {
     HAL_GPIO_TogglePin(GPIOB, GPIO_PIN_13);
     HAL_Delay(100);

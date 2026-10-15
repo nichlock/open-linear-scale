@@ -116,6 +116,7 @@ def focusSamples(time_ms, samples0, samples1):
 
 
 def main():
+    print("WARNING: This script will not set the device into burst mode, if a UART timeout happens change the mode manually.")
     args = parse_args()
 
     print(f'Reading from {args.port}')

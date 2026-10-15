@@ -11,12 +11,54 @@ There are three focuses in my scripts:
    2. `BurstAnalysis.py` will read back and help analyze one single burst of data.
 3. Calibration Data
    1. `AccuracySamplerAuto.py` will move a Prusa 3D printer and then read back one full burst of the sensor. This helps to understand the accuracy of the sensor, although it relies a lot on the 3D printer, which is not very accurate at this scale.
-   2. `AccuracySamplerCalibration.py` is the evolution of the above. It will move the 3D printer then read back one sensor burst and a Mitutoyo device. This works in conjunction with an arduino board running the `spc-firmware` - I used a NUCLEO-F446RE, others will work with the C code, though.
+   2. `AccuracySamplerCalibration.py` is the evolution of the above. It will move the 3D printer then read back one sensor burst and a Mitutoyo device. This works in conjunction with a NUCLEO-F446RE running the [`spc-firmware`](spc-firmware/README.md).
    3. `AccuracyAnalysis.py` is the script to analyze the many bursts captured in a calibration sweep.
 
 My work on this project so far has not been focused on creating formal host software, so these scripts are provided as-is. 
 
-I usually turn to these because I have new questions to answer, so my use of these scripts involves regularly modifying them. Things like port number, baud, etc., are generally hard-coded in each file.
+I usually turn to these because I have new questions to answer, so my use of these scripts involves regularly modifying them.
+
+## Ports and Settings
+
+Each script takes its serial ports and baud rates as command-line arguments. Run a script with `--help` to see them. The defaults are my own setup (sensor on `COM4` at 460800 baud), so you will usually need to pass your own port, for example:
+
+```sh
+python LiveView.py COM3
+python LiveView.py /dev/ttyUSB0
+```
+
+Other settings, such as file paths and test parameters, are constants at the top of each file.
+
+## Burst Mode
+
+The firmware starts in text position mode. These scripts read bursts and need the sensor in a burst output mode first:
+
+- `LiveSingleBurst.py`
+- `BurstReader.py`
+- `AccuracySamplerAuto.py`
+- `AccuracySamplerCalibration.py`
+
+The scripts don't change the mode themselves, and they print a warning about this when they start. If one stops with a UART timeout, set the mode manually with a serial terminal:
+
+```
+w 2 1      # SENSOR_STATE = stop
+w 6 3      # SENSOR_OUTPUT = OUTPUT_DBG_BURST_DIFF (lane transients)
+w 2 0      # SENSOR_STATE = start
+```
+
+The mode is not saved, so do this again after every reset. See [Output Format](../firmware/README.md#output-format) in the firmware README for all of the modes.
+
+`LiveView.py` reads the hex position output (`w 6 1`) and the lane transient bursts. It does not parse the default text position output.
+
+## Data Files
+
+Measurement data is not included in this repository, at least for now. The scripts save their data here:
+
+- `BurstReader.py` saves each burst to `impulse_data/` by default.
+- The accuracy samplers ask for an output folder when they start.
+- `AccuracyAnalysis.py` reads a sweep from `./data/accuracy` and `./data/accuracy_mitutoyo` (the `DIRECTORY` and `MITUTOYO_DIRECTORY` constants).
+
+`tests/data` and any `accuracy` folder are in `.gitignore`, so data saved there isn't committed by accident. `impulse_data/` is not ignored. To run the analysis, capture your own sweep first and point those constants at it.
 
 # Accuracy Analysis
 
