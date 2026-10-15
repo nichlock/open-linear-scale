@@ -77,15 +77,53 @@ Commands are single lines ending in `\n` or `\r`. Numbers can be decimal or `0x`
 
 The registers are defined in `REGISTER_LIST` in [`measure-main-events.cpp`](src/measure-main-events.cpp), with their defaults and permission flags. A register's index is its position in that list, starting at 0. The values for the state, input, output and algorithm registers are the `StateMachine`, `ADC_INPUT_LIST`, `SampleOutputTypes` and `SensorAlgorithms` enums in the same file.
 
+Permissions: `RD` = readable, `WP` = writable while stopped, `WR` = writable while running.
+
+| Index | Name                          | Perms      | Description |
+| ----- | ----------------------------- | ---------- | ----------- |
+| 0     | `READING_F`                   | RD         | Latest tared position, as float bits. Units are set by `CONVERSION_FACTOR` (mm by default). |
+| 1     | `ERROR_VALUE`                 | RD WP WR   | `ErrorFlag` bitfield. Write 0 to clear. See [Error Flags](#error-flags). |
+| 2     | `SENSOR_STATE`                | RD WP WR   | `StateMachine` value. Write 0 to start, 1 to stop. |
+| 3     | `CONVERSION_FACTOR`           | RD WP WR   | Float multiplier from sensor units to output units. Default 0.635 (mm). |
+| 4     | `SENSOR_TARE`                 | RD WP WR   | Float, in output units. See [Tare](#tare). |
+| 5     | `SENSOR_INPUT`                | RD WP      | ADC input, from `ADC_INPUT_LIST`. |
+| 6     | `SENSOR_OUTPUT`               | RD WP      | UART output mode, from `SampleOutputTypes`. |
+| 7     | `SENSOR_ALGORITHM`            | RD WP      | Emitter algorithm, from `SensorAlgorithms`. |
+| 8     | `SEQUENCE_TIME_US`            | RD WP      | Length of one full emitter sequence, in µs. |
+| 9     | `TX_RX_DELAY_US`              | RD WP      | Delay from emitter change to ADC conversion, in µs. |
+| 10    | `CONVERSION_WINDOW`           | RD WP      | ADC sampling time setting (`LL_ADC_SAMPLINGTIME_*`). |
+| 11    | `DISCARD_FIRST_SEQUENCE`      | RD WP      | Sequences to skip at the start of each burst printout. |
+| 12    | `BURST_COUNT`                 | RD WP      | Sequences collected per burst in the burst output modes. |
+| 13    | `BURST_OFFSET_ENABLE`         | RD WP      | In raw burst mode, capture the second half of the readings instead of the first. |
+| 14    | `TRUE_OVERSAMPLE_CYCLE_NS`    | RD         | Achieved time per emitter state, in ns. |
+| 15    | `TRUE_ADC_CONVERSION_NS`      | RD         | Achieved ADC conversion window, in ns. |
+| 16    | `TRUE_ADC_DELAY_NS`           | RD         | Achieved TX-to-RX delay, in ns. |
+| 17    | `SEQUENCE_TIMER_FREQ`         | RD         | Sequence timer clock, in Hz. |
+| 18    | `TRUE_CONV_PER_OVERSAMPLE`    | RD         | ADC conversions per oversample. |
+| 19    | `TRUE_ADC_OVERSAMPLE_TIME_NS` | RD         | Total ADC time per oversample, in ns. |
+
 Registers with permission `P_WP` ("write-paused") and not `P_WR` ("write-running") can only be changed while the sensor is stopped. To change them, stop the sensor, write the registers, then start it again:
 
 ```
 w 2 1      # SENSOR_STATE = stop
-w 7 500    # SEQUENCE_TIME_US = 500
+w 8 500    # SEQUENCE_TIME_US = 500
 w 2 0      # SENSOR_STATE = start
 ```
 
 The `TRUE_*` registers report what the hardware actually achieved after rounding the requested timing to the available timer and ADC settings.
+
+### Tare
+
+`READING_F` and the floating point UART output report the position minus the tare offset. Writing a float to `SENSOR_TARE` adds that value to the tare offset. The firmware consumes the value on the next measurement and resets `SENSOR_TARE` to 0, so each write applies once and repeated writes add up.
+
+To zero the scale at its current position, write the current `READING_F` value into `SENSOR_TARE`:
+
+```
+r 0                # READING_F, e.g. 41200000 (10.0)
+w 4 0x41200000     # SENSOR_TARE = 10.0, next readings are about 0
+```
+
+The offset is kept in sensor units, so changing `CONVERSION_FACTOR` afterwards does not move the zero point. You cannot read back the accumulated offset. To remove it, write its negative or reset the board.
 
 ## Error Flags
 
@@ -107,8 +145,3 @@ end
 In lane transient mode, the eight values are lane 0's four transients followed by lane 1's, and `<sum>` is their total. In raw mode, they are eight consecutive oversamples.
 
 Sampling pauses while a burst prints, so there is a gap between bursts.
-
-# Known Limitations
-
-- On-sensor position output (`SENSOR_OUTPUT = 0`) and the `READING_F` register are not implemented yet. `evalPosition()` and `updatePosition()` exist but aren't called, so the host scripts in [`tests/`](../tests/README.md) currently compute the position.
-- Only UART output is supported. SSI is planned.

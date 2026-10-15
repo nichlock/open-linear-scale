@@ -45,19 +45,19 @@ Each folder has its own README with deeper dives into its topics.
 
 ## Technical Overview
 
-<!-- PHOTO: sensor (grid side up) next to the reflector (pad side up), so the two matching patterns are visible -->
+<img src="docs/overlap/assembled.png" alt="Copper overlap between the PCBs." width="500">
 
 The encoder has two parts: a **sensor PCB** that moves along the axis, and a passive **reflector PCB** fixed along its length. They should not touch. The copper faces sit about 0.1mm apart.
 
 **Sensing.** The underside of the sensor has a repeating row of transmit electrodes, called *emitters*, with eight per 5.08mm period. It also has one long receive (RX) antenna. The reflector's T-shaped pads couple groups of emitters to the RX antenna. Where the reflector sits relative to the sensor decides which emitters couple, and how strongly.
 
-<!-- PHOTO/DIAGRAM: annotated close-up of the emitter grid, RX antenna and reflector pads -->
+<img src="docs/overlap/detail.png" alt="Copper overlap between the PCBs in detail." width="500">
 
 **Measurement cycle.** The STM32 steps its 8 emitter pins through a fixed 16-step pattern. At each step, some emitters switch low-to-high or high-to-low. Charge couples through the reflector into the RX antenna. A charge integrator captures it, a low-pass filter smooths it, and the ADC oversamples it. The steps run at 16kHz, so a full sequence completes at 1kHz.
 
 **Position estimate.** Each sequence gives a position within one period. The [Functional Description](#functional-description) explains how. Unwrapping successive estimates gives a continuous position. For this to work, the sensor must move less than a quarter of a period (1.27mm) per sequence. At the default 1kHz, that limits speed to about 1.2m/s.
 
-**Output.** UART at 460800 baud. The firmware currently streams raw lane data, and the scripts in `tests/` compute the position on the host. On-sensor position output and an SSI interface are planned.
+**Output.** UART at 460800 baud. By default, the firmware streams position data in hex format, and the script `tests/LiveView.py` plots a position on the host. A new position is output once per measurement cycle (1kHz). The sensor can also output earlier stages in the algorithm for debugging and development.
 
 ![System Block Diagram](docs/plots/system-block-diagram.png)
 

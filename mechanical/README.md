@@ -47,6 +47,7 @@ I create the gap using two layers of Kapton stacked on top of each other, on eit
 | `Slider-Housing.stl`     | Housing that restrains the sensor PCB.                            |
 | `Reflector-Mount.stl`    | Mount that holds the reflector PCB on the printer's X-axis rails. |
 | `calibration-prusa.step` | The full assembly, for viewing in any CAD tool.                   |
+| `calibration-prusa.f3z`  | The Fusion360 archive export of the full assembly.                |
 | `assembly-photos/`       | Photos for each assembly step below.                              |
 
 ### BOM and Assembly Instructions
@@ -62,14 +63,17 @@ This is a rough BOM in an attempt to capture the somewhat patched-together desig
 | M3x16mm screw                                 | 4   | 1    |
 | M3 washers                                    | 8   | 1, 3 |
 | Sensor PCB                                    | 1   | 2    |
-| Tape for Shimming                             | 1   | 2    |
+| Kapton Tape for Shimming                      | 1   | 2    |
 | Slider Housing                                | 1   | 3    |
 | M3x12mm screw                                 | 4   | 3    |
 | Aluminum Foil                                 | 1   | 3    |
 | Double-sided tape                             | 1   | 3    |
 | Reflector PCB                                 | 1   | 4    |
+| Ground wire for shielding                     | 1   | 4    |
 | Reflector Mount                               | 1   | 6    |
-| STM32 Nucleo (or other UNO-style Dev Board)   | 1   | 6    |
+| Tape for printer bed                          | 1   | 10   |
+| SPC cable or wires                            | 1   | 11   |
+| STM32 Nucleo (or other UNO-style Dev Board)   | 1   | 11   |
 
 These assembly instructions align with the photos in `assembly-photos`.
 
@@ -94,7 +98,7 @@ The "calibration" fixture is currently the only one I trust enough to publish. I
 
 A Mitutoyo indicator is mounted to this to run the [accuracy/calibration tests](../tests/README.md#accuracy-analysis).
 
-The reflector mount is designed to only take pins. The reflector is never screwed in. The pins are sufficient to hold it well enough in my testing. This enables the assembly to be a little more easily installed/removed from the printer. 
+The reflector mount is designed to only take pins. The reflector is never screwed in, even though there are hles meant for screws. The pins are sufficient to hold it well enough in my testing. Pin-only makes the assembly much easier to instal and remove from the printer. 
 
 The reflector mount snaps into place on the Prusa MK4S X-axis rails.
 
