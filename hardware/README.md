@@ -18,11 +18,7 @@ You will also need a UART adapter. For debugging, I use this [DTECH USB to TTL A
 
 The power input accepts 5V. It goes directly to two AP7354 LDOs and nowhere else. I have not done formal WCA or testing, but an input of 4.5~5.5V should pose no issues. The sensor draws peaks of about 25mA.
 
-- [PDF Schematic](sensor-pcb/sensor-pcb.pdf) (committed with the design)
-- [Fabrication Files](https://github.com/nichlock/open-linear-scale/releases/download/development/sensor-pcb-fabrication.zip) (development release)
-- [Assembly Files](https://github.com/nichlock/open-linear-scale/releases/download/development/sensor-pcb-assembly.zip) (development release)
-- [Bill of Materials](https://github.com/nichlock/open-linear-scale/releases/download/development/sensor-pcb.csv) (development release)
-- [STEP Model](https://github.com/nichlock/open-linear-scale/releases/download/development/sensor-pcb.step) (development release)
+You can find the latest gerber and STEP files in the [releases](https://github.com/nichlock/open-linear-scale/releases).
 
 | Parameter      | Value           |
 | -------------- | --------------- |
