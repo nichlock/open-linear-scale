@@ -4,7 +4,8 @@ Hardware (hardware/, mechanical/): CERN-OHL-P-2.0, see LICENSE-CERN-OHL-P
 Firmware, software and documentation (firmware/, tests/, docs/): MIT, see LICENSE-MIT
 
 Exceptions:
-- firmware/src/cube-mx-autogen/* are
-  © STMicroelectronics under their own license terms.
+- firmware/src/cube-mx-autogen/* are © STMicroelectronics, under
+  BSD-3-Clause or Apache-2.0 depending on the file.
+  See firmware/src/cube-mx-autogen/LICENSE.md
 
 Copyright (c) 2026 Nick Steele
