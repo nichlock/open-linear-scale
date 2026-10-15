@@ -13,7 +13,7 @@ An open-source capacitive encoder design with hardware, firmware, test data, and
 | Accuracy     | 40µm (1.6 thou)* |
 | Output Type  | UART             |
 
-*Measured against to a Mitutoyo 543-793B-12 at room temperature. This value is based on the electrical precision and resolution. See [Practical Accuracy Measurements](#practical-accuracy-measurements) for a summary of the measured error.
+*Measured against a Mitutoyo 543-793B-12 at room temperature. This value is based on the electrical precision and resolution. See [Practical Accuracy Measurements](#practical-accuracy-measurements) for a summary of the measured error.
 
 ## Quickstart
 
