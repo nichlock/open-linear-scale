@@ -12,10 +12,9 @@ on:
   push:
     branches: [main]
     tags: ["v*"]
+  # No path filter: ERC/DRC and the PDF check are required status checks on main,
+  # so they must report on every pull request or docs-only PRs could never merge.
   pull_request:
-    paths:
-      - "hardware/**"
-      - ".github/workflows/hardware.yml"
   workflow_dispatch:
 
 env:

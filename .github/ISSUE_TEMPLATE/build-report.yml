@@ -1,0 +1,26 @@
+name: Build report
+description: Share a sensor you built, whether it worked well or not.
+title: "Build report: "
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for building one! Any results are useful, including problems.
+  - type: textarea
+    id: build
+    attributes:
+      label: What you built
+      description: Which release or commit, where you ordered the boards, and anything you changed.
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results
+      description: How it performed. Measurements, plots or photos are very welcome (drag them in here).
+    validations:
+      required: true
+  - type: textarea
+    id: problems
+    attributes:
+      label: Problems or notes
+      description: Anything that went wrong or was unclear in the docs.
