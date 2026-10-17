@@ -175,8 +175,8 @@ A failure while initializing the clocks or peripherals at startup is fatal. The 
 
 | Value | Mode                    | Output                                                                                                                      |
 | ----- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 0     | `OUTPUT_FLOATING_TEXT`  | **Default.** One position per sequence (1kHz by default), as text with 6 decimals, for example `12.345678`.                 |
-| 1     | `OUTPUT_FLOATING_HEX`   | One position per sequence, as the 8 hex digits of the IEEE-754 32-bit float, for example `41200000` for 10.0.               |
+| 0     | `OUTPUT_FLOATING_TEXT`  | One position per sequence (1kHz by default), as text with 6 decimals, for example `12.345678`.                              |
+| 1     | `OUTPUT_FLOATING_HEX`   | **Default.** One position per sequence, as the 8 hex digits of the IEEE-754 32-bit float, for example `41200000` for 10.0. |
 | 2     | `OUTPUT_DBG_BURST_RAW`  | Raw oversamples, in bursts. See below.                                                                                      |
 | 3     | `OUTPUT_DBG_BURST_DIFF` | Lane transients, in bursts. See below.                                                                                      |
 | 4     | `OUTPUT_DBG_NONE`       | Nothing. The sensor keeps running and `READING_F` keeps updating. Useful for electrical measurements without UART activity. |
@@ -191,7 +191,7 @@ w 6 3      # SENSOR_OUTPUT = OUTPUT_DBG_BURST_DIFF
 w 2 0      # SENSOR_STATE = start
 ```
 
-The setting is not saved. After a reset the firmware is back in text mode.
+The setting is not saved. After a reset the firmware is back in hex mode.
 
 ### Burst Modes
 

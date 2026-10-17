@@ -31,7 +31,7 @@ Other settings, such as file paths and test parameters, are constants at the top
 
 ## Burst Mode
 
-The firmware starts in text position mode. These scripts read bursts and need the sensor in a burst output mode first:
+The firmware starts in hex position mode. These scripts read bursts and need the sensor in a burst output mode first:
 
 - `LiveSingleBurst.py`
 - `BurstReader.py`
@@ -48,7 +48,7 @@ w 2 0      # SENSOR_STATE = start
 
 The mode is not saved, so do this again after every reset. See [Output Format](../firmware/README.md#output-format) in the firmware README for all of the modes.
 
-`LiveView.py` reads the hex position output (`w 6 1`) and the lane transient bursts. It does not parse the default text position output.
+`LiveView.py` reads the default hex position output and the lane transient bursts. It does not parse the text position output (`w 6 0`).
 
 ## Data Files
 
@@ -64,7 +64,7 @@ Measurement data is not included in this repository, at least for now. The scrip
 
 I measured the error with a Mitutoyo 543-793B-12 digital indicator. The test fixtures are described in the [mechanical README](../mechanical/README.md).
 
-I moved the sensor by a total of 9mm in steps of 0.1mm using my 3D printer. The stepsize was not perfect, but it's not a part of the analysis because the indicator tells me a true position of my sensor. I then processed the measurements using a median filter (see the [noise](#noise) section for more information).
+I moved the sensor by a total of 9mm in steps of 0.1mm using my 3D printer. The step size was not perfect, but it's not a part of the analysis because the indicator tells me a true position of my sensor. I then processed the measurements using a median filter (see the [noise](#noise) section for more information).
 
 ![Four Layer Sensor Error](../docs/4-layer-sensor-error-median-filtered.png)
 

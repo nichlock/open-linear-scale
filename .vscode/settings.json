@@ -1,0 +1,38 @@
+{
+  "cSpell.words": [
+    "assy",
+    "bitfield",
+    "BSRR",
+    "CMSIS",
+    "CONV",
+    "DTECH",
+    "ERRFLAG",
+    "fixturing",
+    "GPIOC",
+    "hardfp",
+    "HASL",
+    "jobset",
+    "Kapton",
+    "kicad",
+    "linkflags",
+    "Mitutoyo",
+    "nonlinearities",
+    "Nucleo",
+    "Nyquist",
+    "oversample",
+    "oversampled",
+    "oversamples",
+    "pinout",
+    "Prusa",
+    "SAMPLINGTIME",
+    "softfp",
+    "strtoul",
+    "UART",
+    "USART",
+    "VDDA",
+    "VREF"
+  ],
+  "cSpell.ignoreWords": [
+    "UNKOWN"
+  ]
+}

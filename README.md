@@ -72,7 +72,7 @@ The position of the reflector relative to the sensor decides which emitters coup
 
 **Position estimate.** Each sequence gives a position within one period. The [Functional Description](#functional-description) explains how. Unwrapping successive estimates gives a continuous position. For this to work, the sensor can't be moving too fast for the algorithm to track. Conservatively, the maximum speed might be 0.6m/s, although I have not tested this.
 
-**Output.** The sensor outputs a hex-equivilent floating point value over UART at 460800 baud, every millisecond. The script `tests/LiveView.py` plots a position on the host. The sensor can also output other formats and debugging information.
+**Output.** The sensor outputs a hex-equivalent floating point value over UART at 460800 baud, every millisecond. The script `tests/LiveView.py` plots a position on the host. The sensor can also output other formats and debugging information.
 
 ## Status and Limitations
 
