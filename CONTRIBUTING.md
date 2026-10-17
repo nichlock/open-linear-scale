@@ -2,12 +2,13 @@
 
 Thanks for your interest in this project! It started as a personal learning project, and I'd like it to grow with help from people who know more than I do in some areas.
 
-## Where Help Is Most Welcome
+## How can you help?
 
-- **Mechanical design.** I'm not a mechanical engineer. The current calibration fixture is 3D printed, flexes, and depends on a Prusa printer as its motion stage. Better fixtures, a machined version, or ways to mount the sensor on a real machine would all be valuable. See the [mechanical README](mechanical/README.md).
-- **Testing.** Results from other builds would help a lot. See the [tests README](tests/README.md).
-- **Firmware.** There are still features to add to the firmware, and new ideas are welcome. See the [firmware README](firmware/README.md).
-- **Analog frontend.** The STM32L4's analog peripherals are getting harder to source. I plan to move to a more standard STM32 with a discrete analog frontend. See the [hardware README](hardware/README.md).
+Where help is most needed:
+
+- **Mechanical design**: I'm not a mechanical engineer. The current calibration fixture is 3D printed, flexes, and depends on a Prusa printer as its motion stage. Better fixtures, a machined version, or ways to mount the sensor on a real machine would all be valuable. See the [mechanical README](mechanical/README.md).
+- Testing: Results from other builds would help a lot. See the [tests README](tests/README.md).
+- Firmware: There are still features to add to the firmware, and new ideas are welcome. See the [firmware README](firmware/README.md).
 
 ## How to Get Involved
 
