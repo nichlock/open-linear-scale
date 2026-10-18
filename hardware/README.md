@@ -24,6 +24,7 @@ You can find the latest gerber and STEP files in the [releases](https://github.c
 | -------------- | --------------- |
 | Layer count    | 4               |
 | Thickness      | 1.6mm           |
+| Substrate      | FR-4            |
 | Surface Finish | HASL acceptable |
 
 | Layer      | Purpose                                                         |
@@ -55,6 +56,7 @@ This PCB is a two layer stackup. Copper is placed on the "wrong" side of the boa
 | -------------- | ---------------------------- |
 | Layer count    | 2                            |
 | Thickness      | 1.6mm                        |
+| Substrate      | FR-4                         |
 | Surface Finish | Not applicable (no openings) |
 
 # Making a Longer Reflector
