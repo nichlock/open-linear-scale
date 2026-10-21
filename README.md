@@ -1,10 +1,10 @@
-# An Open Source Incremental Linear Encoder
+# Open-Source Capacitive Linear Encoder
 
-![Header image of the sensor and reflector PCB](docs/header-no-bg.png)
+This is an open-source capacitive encoder design with hardware, firmware, test data, and design details. This design is still in development. It's targeted towards open-source DRO sensors and digital calipers.
+
+![capacitive linear encoder sensor PCB and copper reflector scale](docs/header-no-bg.png)
 
 # Overview
-
-An open-source capacitive encoder design with hardware, firmware, test data, and design details.
 
 | Parameter    | Value            |
 | ------------ | ---------------- |
