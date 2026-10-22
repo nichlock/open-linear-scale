@@ -1,6 +1,6 @@
 # Open-Source Capacitive Linear Encoder
 
-This is an open-source capacitive encoder design with hardware, firmware, test data, and design details. This design is still in development. It's targeted towards open-source DRO sensors and digital calipers.
+This is an open-source capacitive encoder design with hardware, firmware, test data, and design details. This design is still in development. It's targeted towards open-source DRO sensors and digital calipers. The build costs roughly $32 before shipping.
 
 ![capacitive linear encoder sensor PCB and copper reflector scale](docs/header-no-bg.png)
 
